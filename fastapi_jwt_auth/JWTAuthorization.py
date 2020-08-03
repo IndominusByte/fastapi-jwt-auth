@@ -164,7 +164,7 @@ class AuthJWT:
         redis.setex(jti,expired_time,'true')
 
     @staticmethod
-    def create_access_token(identity: Union[str,int], type_token: str, fresh: Optional[bool] = False) -> bytes:
+    def create_access_token(identity: Union[str,int], fresh: Optional[bool] = False) -> bytes:
         """
         Create a token with minutes for expired time, info for param and return please check to
         function create token
@@ -173,13 +173,13 @@ class AuthJWT:
         """
         return AuthJWT.create_token(
             identity=identity,
-            type_token=type_token,
+            type_token="access",
             fresh=fresh,
             exp_time=timedelta(minutes=AuthJWT._ACCESS_TOKEN_EXPIRES)
         )
 
     @staticmethod
-    def create_refresh_token(identity: Union[str,int], type_token: str) -> bytes:
+    def create_refresh_token(identity: Union[str,int]) -> bytes:
         """
         Create a token with days for expired time, info for param and return please check to
         function create token
@@ -188,7 +188,7 @@ class AuthJWT:
         """
         return AuthJWT.create_token(
             identity=identity,
-            type_token=type_token,
+            type_token="refresh",
             exp_time=timedelta(days=AuthJWT._REFRESH_TOKEN_EXPIRES)
         )
 

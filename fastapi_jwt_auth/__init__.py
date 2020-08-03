@@ -1,0 +1,1 @@
+from .JWTAuthorization import AuthJWT
