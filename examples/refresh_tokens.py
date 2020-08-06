@@ -1,7 +1,12 @@
-import uvicorn
 from fastapi import FastAPI, Depends, HTTPException
 from pydantic import BaseModel, Field
 from fastapi_jwt_auth import AuthJWT
+
+# set secret key to environ variable with this command
+# export AUTHJWT_SECRET_KEY=secretkey, in terminal linux
+# run app with this command uvicorn refresh_tokens:app --host 0.0.0.0 --port 5000
+# if you install python-dotenv run this command below
+# uvicorn refresh_tokens:app --host 0.0.0.0 --port 5000 --env-file .env
 
 app = FastAPI()
 
@@ -45,7 +50,3 @@ def protected(Authorize: AuthJWT = Depends()):
 
     current_user = Authorize.get_jwt_identity()
     return {"logged_in_as": current_user}
-
-
-if __name__ == '__main__':
-    uvicorn.run("refresh_tokens:app",host='0.0.0.0',port=5000,reload=True)

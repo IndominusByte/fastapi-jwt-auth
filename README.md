@@ -3,15 +3,14 @@ FastAPI extension that provides JWT Auth support (secure, easy to use and lightw
 
 ## Features
 <ul>
-  <li>Access Token and Refresh Token</li>
+  <li>Access token and refresh token</li>
   <li>Token freshness will only allow fresh tokens to access endpoint</li>
-  <li>Token revoking/blacklisting using Redis</li>
+  <li>Token revoking/blacklisting</li>
+  <li>Custom token revoking</li>
 </ul>
 
 ## TODO
 <ul>
-  <li>Custom config like token expired, etc <i>(On Going)</i></li>
-  <li>Custom config redis host and port <i>(On Going)</i></li>
   <li>Support for adding custom claims to JSON Web Tokens</li>
   <li>Migrate to pip package</li>
 </ul>

@@ -2,3 +2,4 @@ fastapi
 PyJWT
 redis
 uvicorn
+python-dotenv
