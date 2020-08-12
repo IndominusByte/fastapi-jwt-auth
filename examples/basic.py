@@ -3,7 +3,7 @@ from pydantic import BaseModel, Field
 from fastapi_jwt_auth import AuthJWT
 
 # set secret key to environ variable with this command
-# export AUTHJWT_SECRET_KEY=secretkey, in terminal linux
+# export AUTHJWT_SECRET_KEY=secretkey, in terminal linux, macOS, Windows Bash
 # run app with this command uvicorn basic:app --host 0.0.0.0 --port 5000
 # if you install python-dotenv run this command below
 # uvicorn basic:app --host 0.0.0.0 --port 5000 --env-file .env

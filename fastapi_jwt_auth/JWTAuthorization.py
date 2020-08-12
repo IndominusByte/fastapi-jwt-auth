@@ -184,7 +184,10 @@ class AuthJWT:
         if isinstance(cls._access_token_expires,timedelta):
             expired = cls._get_int_from_datetime(cls,datetime.now(timezone.utc) + cls._access_token_expires)
         else:
-            expired = cls._get_int_from_datetime(cls,datetime.now(timezone.utc)) + int(cls._access_token_expires)
+            try:
+                expired = cls._get_int_from_datetime(cls,datetime.now(timezone.utc)) + int(cls._access_token_expires)
+            except Exception:
+                raise ValueError("The 'AUTHJWT_ACCESS_TOKEN_EXPIRES' must be an integer")
 
         return cls._create_token(
             cls,
@@ -205,7 +208,10 @@ class AuthJWT:
         if isinstance(cls._refresh_token_expires,timedelta):
             expired = cls._get_int_from_datetime(cls,datetime.now(timezone.utc) + cls._refresh_token_expires)
         else:
-            expired = cls._get_int_from_datetime(cls,datetime.now(timezone.utc)) + int(cls._refresh_token_expires)
+            try:
+                expired = cls._get_int_from_datetime(cls,datetime.now(timezone.utc)) + int(cls._refresh_token_expires)
+            except Exception:
+                raise ValueError("The 'AUTHJWT_REFRESH_TOKEN_EXPIRES' must be an integer")
 
         return cls._create_token(
             cls,

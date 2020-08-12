@@ -3,3 +3,4 @@ PyJWT
 redis
 uvicorn
 python-dotenv
+pytest
