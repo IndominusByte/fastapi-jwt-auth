@@ -37,3 +37,9 @@ def test_header_invalid_jwt(client):
     response = client.get('/protected', headers={'Authorization':'Bearer asd'})
     assert response.status_code == 422
     assert response.json() == {'detail': 'Not enough segments'}
+
+def test_valid_header(client):
+    token = AuthJWT.create_access_token(identity='test')
+    response = client.get('/protected',headers={'Authorization':f"Bearer {token.decode('utf-8')}"})
+    assert response.status_code == 200
+    assert response.json() == {'hello':'world'}

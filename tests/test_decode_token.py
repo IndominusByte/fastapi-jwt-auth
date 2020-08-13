@@ -11,7 +11,7 @@ def client():
     @app.get('/protected')
     def protected(Authorize: AuthJWT = Depends()):
         Authorize.jwt_required()
-        return {'hello','world'}
+        return {'hello':'world'}
 
     @app.get('/raw_token')
     def raw_token(Authorize: AuthJWT = Depends()):
@@ -39,7 +39,7 @@ def default_access_token():
 def encoded_token(default_access_token):
     return jwt.encode(default_access_token,'secret-key',algorithm='HS256')
 
-def test_verified_token(client,monkeypatch):
+def test_verified_token(client,monkeypatch,encoded_token):
     monkeypatch.setenv("AUTHJWT_SECRET_KEY","secret-key")
     monkeypatch.setenv("AUTHJWT_ACCESS_TOKEN_EXPIRES","1")
     reset_config()
@@ -63,6 +63,10 @@ def test_verified_token(client,monkeypatch):
     response = client.get('/protected',headers={"Authorization":f"Bearer {token.decode('utf-8')}"})
     assert response.status_code == 422
     assert response.json() == {'detail': 'The specified alg value is not allowed'}
+
+    response = client.get('/protected',headers={"Authorization":f"Bearer {encoded_token.decode('utf-8')}"})
+    assert response.status_code == 200
+    assert response.json() == {'hello':'world'}
 
 def test_get_raw_token(client,default_access_token,encoded_token):
     response = client.get('/raw_token',headers={"Authorization":f"Bearer {encoded_token.decode('utf-8')}"})

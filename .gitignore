@@ -27,3 +27,6 @@ var/
 .installed.cfg
 *.egg
 .pytest_cache
+
+# coverage
+.coverage
