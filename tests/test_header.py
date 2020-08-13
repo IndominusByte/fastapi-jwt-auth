@@ -10,6 +10,7 @@ def client():
     @app.get('/protected')
     def protected(Authorize: AuthJWT = Depends()):
         Authorize.jwt_required()
+        return {'hello':'world'}
 
     client = TestClient(app)
     return client

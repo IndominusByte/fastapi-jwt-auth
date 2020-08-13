@@ -11,6 +11,7 @@ def client():
     @app.get('/protected')
     def protected(Authorize: AuthJWT = Depends()):
         Authorize.jwt_required()
+        return {'hello','world'}
 
     @app.get('/raw_token')
     def raw_token(Authorize: AuthJWT = Depends()):
