@@ -67,12 +67,30 @@ Run the server with:
 ```console
 $ uvicorn basic:app --host 0.0.0.0 --port 5000
 
-INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
-INFO:     Started reloader process [28720]
-INFO:     Started server process [28722]
+INFO:     Started server process [6051]
 INFO:     Waiting for application startup.
 INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:5000 (Press CTRL+C to quit)
 ```
+## Configuration Options
+- AUTHJWT_ACCESS_TOKEN_EXPIRES
+How long an access token should live before it expires. If you not define in env variable
+default value is `15 minutes`. Or you can custom with value `int` (seconds), example
+`AUTHJWT_ACCESS_TOKEN_EXPIRES=300` its mean access token expired in 5 minute
+
+- AUTHJWT_REFRESH_TOKEN_EXPIRES
+How long a refresh token should live before it expires. If you not define in env variable
+default value is `30 days`. Or you can custom with value `int` (seconds), example
+`AUTHJWT_REFRESH_TOKEN_EXPIRES=86400` its mean refresh token expired in 1 day
+
+- AUTHJWT_BLACKLIST_ENABLED
+Enable/disable token revoking. Default value is None, for enable blacklist token: `AUTHJWT_BLACKLIST_ENABLED=true`
+
+- AUTHJWT_SECRET_KEY
+The secret key needed for symmetric based signing algorithms, such as HS*. If this is not set `raise RuntimeError`.
+
+- AUTHJWT_ALGORITHM
+Which algorithms are allowed to decode a JWT. Default value is `HS256`
 
 ## Examples
 Examples are available on [examples](/examples) folder.
