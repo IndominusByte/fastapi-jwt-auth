@@ -73,23 +73,23 @@ INFO:     Application startup complete.
 INFO:     Uvicorn running on http://0.0.0.0:5000 (Press CTRL+C to quit)
 ```
 ## Configuration Options
-- AUTHJWT_ACCESS_TOKEN_EXPIRES
+- AUTHJWT_ACCESS_TOKEN_EXPIRES<br/>
 How long an access token should live before it expires. If you not define in env variable
 default value is `15 minutes`. Or you can custom with value `int` (seconds), example
 `AUTHJWT_ACCESS_TOKEN_EXPIRES=300` its mean access token expired in 5 minute
 
-- AUTHJWT_REFRESH_TOKEN_EXPIRES
+- AUTHJWT_REFRESH_TOKEN_EXPIRES<br/>
 How long a refresh token should live before it expires. If you not define in env variable
 default value is `30 days`. Or you can custom with value `int` (seconds), example
 `AUTHJWT_REFRESH_TOKEN_EXPIRES=86400` its mean refresh token expired in 1 day
 
-- AUTHJWT_BLACKLIST_ENABLED
+- AUTHJWT_BLACKLIST_ENABLED<br/>
 Enable/disable token revoking. Default value is None, for enable blacklist token: `AUTHJWT_BLACKLIST_ENABLED=true`
 
-- AUTHJWT_SECRET_KEY
+- AUTHJWT_SECRET_KEY<br/>
 The secret key needed for symmetric based signing algorithms, such as HS*. If this is not set `raise RuntimeError`.
 
-- AUTHJWT_ALGORITHM
+- AUTHJWT_ALGORITHM<br/>
 Which algorithms are allowed to decode a JWT. Default value is `HS256`
 
 ## Examples
