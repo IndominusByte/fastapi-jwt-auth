@@ -1,6 +1,2 @@
-fastapi
-PyJWT
-redis
-uvicorn
-python-dotenv
-pytest
+fastapi>=0.61.0
+PyJWT>=1.7.1

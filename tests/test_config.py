@@ -1,7 +1,8 @@
-import pytest, os
+import pytest
+from .utils import reset_config
+from fastapi_jwt_auth import AuthJWT
 from fastapi import FastAPI, Depends
 from fastapi.testclient import TestClient
-from fastapi_jwt_auth import AuthJWT
 from datetime import timedelta
 
 @pytest.fixture(scope='function')
@@ -15,14 +16,9 @@ def client():
     client = TestClient(app)
     return client
 
-def reset_config():
-    AuthJWT._access_token_expires = os.getenv("AUTHJWT_ACCESS_TOKEN_EXPIRES") or timedelta(minutes=15)
-    AuthJWT._refresh_token_expires = os.getenv("AUTHJWT_REFRESH_TOKEN_EXPIRES") or timedelta(days=30)
-    AuthJWT._blacklist_enabled = os.getenv("AUTHJWT_BLACKLIST_ENABLED") or None
-    AuthJWT._secret_key = os.getenv("AUTHJWT_SECRET_KEY") or None
-    AuthJWT._algorithm = os.getenv("AUTHJWT_ALGORITHM") or 'HS256'
-
 def test_default_config():
+    reset_config()
+
     assert AuthJWT._access_token_expires.__class__ == timedelta
     assert int(AuthJWT._access_token_expires.total_seconds()) == 900
 

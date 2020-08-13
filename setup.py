@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="fastapi-jwt-auth",
-    version="1.0.3-beta",
+    version="0.1.0-beta",
     author="Nyoman Pradipta Dewantara",
     author_email="nyomanpradipta120@gmail.com",
     description="FastAPI extension that provides JWT Auth support",
@@ -15,7 +15,7 @@ setuptools.setup(
     packages=setuptools.find_packages(),
     zip_safe=False,
     install_requires=[
-        'fastapi>=0.60.2',
+        'fastapi>=0.61.0',
         'PyJWT>=1.7.1'
     ],
     classifiers=[

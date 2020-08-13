@@ -27,12 +27,6 @@ class AuthJWT:
             else:
                 raise HTTPException(status_code=422,detail="Bad Authorization header. Expected value 'Bearer <JWT>'")
 
-    def _has_secret_key(self) -> None:
-        if not self._secret_key:
-            raise RuntimeError(
-                "AUTHJWT_SECRET_KEY must be set when using symmetric algorithm {}".format(self._algorithm)
-            )
-
     def _get_jwt_identifier(self) -> str:
         return str(uuid.uuid4())
 
@@ -66,12 +60,14 @@ class AuthJWT:
         if type_token not in ['access','refresh']:
             raise ValueError("Type token must be between access or refresh")
 
+        # raise an error if secret key doesn't exist
+        if not self._secret_key:
+            raise RuntimeError(
+                "AUTHJWT_SECRET_KEY must be set when using symmetric algorithm {}".format(self._algorithm)
+            )
+
         # passing instance itself because we call create_access_token
         # and create_refresh_token with classmethod
-
-        # raise an error if secret key doesn't exist
-        self._has_secret_key(self)
-
         payload = {
             "iat": self._get_int_from_datetime(self,datetime.now(timezone.utc)),
             "nbf": self._get_int_from_datetime(self,datetime.now(timezone.utc)),
@@ -99,7 +95,10 @@ class AuthJWT:
         :return: raw data from the hash token in the form of a dictionary
         """
         # raise an error if secret key doesn't exist
-        self._has_secret_key()
+        if not self._secret_key:
+            raise RuntimeError(
+                "AUTHJWT_SECRET_KEY must be set when using symmetric algorithm {}".format(self._algorithm)
+            )
 
         try:
             return jwt.decode(
