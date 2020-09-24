@@ -106,27 +106,27 @@ class AuthJWT:
                 self._secret_key,
                 algorithms=self._algorithm
             )
-        except jwt.ExpiredSignatureError as err:
+        except jwt.exceptions.ExpiredSignatureError as err:
             raise HTTPException(status_code=422,detail=str(err))
-        except jwt.DecodeError as err:
+        except jwt.exceptions.DecodeError as err:
             raise HTTPException(status_code=422,detail=str(err))
-        except jwt.InvalidAlgorithmError as err:
+        except jwt.exceptions.InvalidAlgorithmError as err:
             raise HTTPException(status_code=422,detail=str(err))
-        except jwt.InvalidKeyError as err:
+        except jwt.exceptions.InvalidKeyError as err:
             raise HTTPException(status_code=422,detail=str(err))
-        except jwt.InvalidTokenError as err:
+        except jwt.exceptions.InvalidTokenError as err:
             raise HTTPException(status_code=422,detail=str(err))
-        except jwt.InvalidIssuerError as err:
+        except jwt.exceptions.InvalidIssuerError as err:
             raise HTTPException(status_code=422,detail=str(err))
-        except jwt.InvalidAudienceError as err:
+        except jwt.exceptions.InvalidAudienceError as err:
             raise HTTPException(status_code=422,detail=str(err))
-        except jwt.InvalidIssuedAtError as err:
+        except jwt.exceptions.InvalidIssuedAtError as err:
             raise HTTPException(status_code=422,detail=str(err))
-        except jwt.InvalidSignatureError as err:
+        except jwt.exceptions.InvalidSignatureError as err:
             raise HTTPException(status_code=422,detail=str(err))
-        except jwt.ImmatureSignatureError as err:
+        except jwt.exceptions.ImmatureSignatureError as err:
             raise HTTPException(status_code=422,detail=str(err))
-        except jwt.MissingRequiredClaimError as err:
+        except jwt.exceptions.MissingRequiredClaimError as err:
             raise HTTPException(status_code=422,detail=str(err))
 
     @classmethod
