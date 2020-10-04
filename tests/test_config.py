@@ -38,15 +38,16 @@ def test_token_with_other_value(monkeypatch):
     assert int(timedelta(minutes=1).total_seconds()) == int(AuthJWT._access_token_expires)
     assert int(timedelta(days=1).total_seconds()) == int(AuthJWT._refresh_token_expires)
 
-def test_token_config_not_int(monkeypatch):
+def test_token_config_not_int(monkeypatch,Authorize):
     monkeypatch.setenv("AUTHJWT_ACCESS_TOKEN_EXPIRES","test")
     monkeypatch.setenv("AUTHJWT_REFRESH_TOKEN_EXPIRES","test")
     reset_config()
-    with pytest.raises(ValueError,match=r"AUTHJWT_ACCESS_TOKEN_EXPIRES"):
-        AuthJWT.create_access_token(identity='test')
 
-    with pytest.raises(ValueError,match=r"AUTHJWT_REFRESH_TOKEN_EXPIRES"):
-        AuthJWT.create_refresh_token(identity='test')
+    with pytest.raises(TypeError,match=r"AUTHJWT_ACCESS_TOKEN_EXPIRES"):
+        Authorize.create_access_token(identity='test')
+
+    with pytest.raises(TypeError,match=r"AUTHJWT_REFRESH_TOKEN_EXPIRES"):
+        Authorize.create_refresh_token(identity='test')
 
 def test_state_class_with_other_value_except_token(monkeypatch):
     monkeypatch.setenv("AUTHJWT_BLACKLIST_ENABLED","test")
@@ -57,19 +58,21 @@ def test_state_class_with_other_value_except_token(monkeypatch):
     assert AuthJWT._secret_key == 'test'
     assert AuthJWT._algorithm == 'test'
 
-def test_secret_key_not_exist(client):
+def test_secret_key_not_exist(client,Authorize):
     reset_config()
+
     with pytest.raises(RuntimeError,match=r"AUTHJWT_SECRET_KEY"):
-        AuthJWT.create_access_token(identity='test')
+        Authorize.create_access_token(identity='test')
 
     with pytest.raises(RuntimeError,match=r"AUTHJWT_SECRET_KEY"):
         client.get('/protected',headers={"Authorization":"Bearer test"})
 
-def test_blacklist_enabled_without_callback(monkeypatch,client):
+def test_blacklist_enabled_without_callback(monkeypatch,client,Authorize):
     # set authjwt_secret_key for create token
     monkeypatch.setenv("AUTHJWT_SECRET_KEY","secret-key")
     reset_config()
-    token = AuthJWT.create_access_token(identity='test')
+
+    token = Authorize.create_access_token(identity='test')
     response = client.get('/protected',headers={"Authorization": f"Bearer {token.decode('utf-8')}"})
     assert response.status_code == 200
     # AuthJWT blacklist won't trigger if value

@@ -39,7 +39,7 @@ def default_access_token():
 def encoded_token(default_access_token):
     return jwt.encode(default_access_token,'secret-key',algorithm='HS256')
 
-def test_verified_token(client,monkeypatch,encoded_token):
+def test_verified_token(client,monkeypatch,encoded_token,Authorize):
     monkeypatch.setenv("AUTHJWT_SECRET_KEY","secret-key")
     monkeypatch.setenv("AUTHJWT_ACCESS_TOKEN_EXPIRES","1")
     reset_config()
@@ -53,7 +53,7 @@ def test_verified_token(client,monkeypatch,encoded_token):
     assert response.status_code == 422
     assert response.json() == {'detail': 'Signature verification failed'}
     # ExpiredSignatureError
-    token = AuthJWT.create_access_token(identity='test')
+    token = Authorize.create_access_token(identity='test')
     time.sleep(2)
     response = client.get('/protected',headers={"Authorization":f"Bearer {token.decode('utf-8')}"})
     assert response.status_code == 422
@@ -73,8 +73,8 @@ def test_get_raw_token(client,default_access_token,encoded_token):
     assert response.status_code == 200
     assert response.json() == default_access_token
 
-def test_get_jwt_jti(client,default_access_token,encoded_token):
-    assert AuthJWT.get_jti(encoded_token=encoded_token) == default_access_token['jti']
+def test_get_jwt_jti(client,default_access_token,encoded_token,Authorize):
+    assert Authorize.get_jti(encoded_token=encoded_token) == default_access_token['jti']
 
 def test_get_jwt_identity(client,default_access_token,encoded_token):
     response = client.get('/get_identity',headers={"Authorization":f"Bearer {encoded_token.decode('utf-8')}"})

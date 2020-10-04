@@ -30,3 +30,6 @@ var/
 
 # coverage
 .coverage
+
+# testing py
+test.py

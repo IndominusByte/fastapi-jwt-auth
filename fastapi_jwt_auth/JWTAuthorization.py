@@ -1,26 +1,26 @@
 import jwt, uuid, re, os
 from fastapi import Header, HTTPException
 from datetime import datetime, timezone, timedelta
-from typing import Optional, Dict, Union, Callable
+from typing import Optional, Dict, Union, Callable, Literal, List
 
 class AuthJWT:
     _access_token_expires = os.getenv("AUTHJWT_ACCESS_TOKEN_EXPIRES") or timedelta(minutes=15)
     _refresh_token_expires = os.getenv("AUTHJWT_REFRESH_TOKEN_EXPIRES") or timedelta(days=30)
     _blacklist_enabled = os.getenv("AUTHJWT_BLACKLIST_ENABLED") or None
     _secret_key = os.getenv("AUTHJWT_SECRET_KEY") or None
-    _algorithm = os.getenv("AUTHJWT_ALGORITHM") or 'HS256'
+    _algorithm = os.getenv("AUTHJWT_ALGORITHM") or "HS256"
     _token_in_blacklist_callback = None
     _token = None
 
-    def __init__(self,Authorization: str = Header(None)):
+    def __init__(self,authorization: Optional[str] = Header(None)):
         """
         Get header Authorization with format 'Bearer <JWT>' and verified token, when Authorization header exists
 
         :param Authorization: get Authorization from the header when class initialize
         """
-        if Authorization:
-            if re.match(r"Bearer\s",Authorization) and len(Authorization.split(' ')) == 2 and Authorization.split(' ')[1]:
-                self._token = Authorization.split(' ')[1]
+        if authorization:
+            if re.match(r"Bearer\s",authorization) and len(authorization.split(' ')) == 2 and authorization.split(' ')[1]:
+                self._token = authorization.split(' ')[1]
                 # verified token and check if token is revoked
                 raw_token = self._verified_token(encoded_token=self._token)
                 self._check_token_is_revoked(raw_token)
@@ -41,11 +41,12 @@ class AuthJWT:
         return int(value.timestamp())
 
     def _create_token(
-            self,
-            identity: Union[str,int],
-            type_token: str,
-            exp_time: int,
-            fresh: Optional[bool] = False) -> bytes:
+        self,
+        identity: Union[str,int],
+        type_token: Literal['access','refresh'],
+        exp_time: int,
+        fresh: Optional[bool] = False
+    ) -> bytes:
         """
         This function create token for access_token and refresh_token, when type_token
         is access add a fresh key to dictionary payload
@@ -58,7 +59,7 @@ class AuthJWT:
         :return: Encoded token
         """
         if type_token not in ['access','refresh']:
-            raise ValueError("Type token must be between access or refresh")
+            raise TypeError("Type token must be between access or refresh")
 
         # raise an error if secret key doesn't exist
         if not self._secret_key:
@@ -69,9 +70,9 @@ class AuthJWT:
         # passing instance itself because we call create_access_token
         # and create_refresh_token with classmethod
         payload = {
-            "iat": self._get_int_from_datetime(self,datetime.now(timezone.utc)),
-            "nbf": self._get_int_from_datetime(self,datetime.now(timezone.utc)),
-            "jti": self._get_jwt_identifier(self),
+            "iat": self._get_int_from_datetime(datetime.now(timezone.utc)),
+            "nbf": self._get_int_from_datetime(datetime.now(timezone.utc)),
+            "jti": self._get_jwt_identifier(),
             "exp": exp_time,
             "identity": identity,
             "type": type_token
@@ -130,6 +131,39 @@ class AuthJWT:
             raise HTTPException(status_code=422,detail=str(err))
 
     @classmethod
+    def load_env(cls, settings: Callable[...,List[tuple]]) -> "AuthJWT":
+        try:
+            for setting in settings():
+                if setting[0].lower() == "authjwt_access_token_expires":
+                    if not isinstance(setting[1], (timedelta, int)):
+                        raise TypeError("The 'AUTHJWT_ACCESS_TOKEN_EXPIRES' must be a timedelta or integer")
+                    cls._access_token_expires = setting[1]
+
+                if setting[0].lower() == "authjwt_refresh_token_expires":
+                    if not isinstance(setting[1], (timedelta, int)):
+                        raise TypeError("The 'AUTHJWT_REFRESH_TOKEN_EXPIRES' must be a timedelta or integer")
+                    cls._refresh_token_expires = setting[1]
+
+                if setting[0].lower() == "authjwt_blacklist_enabled":
+                    if not setting[1] in ['true','false']:
+                        raise TypeError("The 'AUTHJWT_BLACKLIST_ENABLED' must be between 'true' or 'false'")
+                    cls._blacklist_enabled = setting[1]
+
+                if setting[0].lower() == "authjwt_secret_key":
+                    if not isinstance(setting[1], str):
+                        raise TypeError("The 'AUTHJWT_SECRET_KEY' must be an string")
+                    cls._secret_key = setting[1]
+
+                if setting[0].lower() == "authjwt_algorithm":
+                    if not isinstance(setting[1], str):
+                        raise TypeError("The 'AUTHJWT_ALGORITHM' must be an string")
+                    cls._algorithm = setting[1]
+        except TypeError:
+            raise
+        except Exception:
+            raise ValueError("Config must be a list of tuple")
+
+    @classmethod
     def token_in_blacklist_loader(cls, callback: Callable[...,bool]) -> "AuthJWT":
         """
         This decorator sets the callback function that will be called when
@@ -169,51 +203,55 @@ class AuthJWT:
                 "the '@AuthJWT.token_in_blacklist_loader' if "
                 "AUTHJWT_BLACKLIST_ENABLED is 'true'")
 
-        if self._token_in_blacklist_callback(decrypted_token=raw_token):
+        if self._token_in_blacklist_callback.__func__(raw_token):
             raise HTTPException(status_code=401,detail="Token has been revoked")
 
-    @classmethod
-    def create_access_token(cls,identity: Union[str,int], fresh: Optional[bool] = False) -> bytes:
+    def create_access_token(self,identity: Union[str,int], fresh: Optional[bool] = False) -> bytes:
         """
         Create a token with minutes for expired time (default), info for param and return please check to
         function create token
 
         :return: hash token
         """
-        if isinstance(cls._access_token_expires,timedelta):
-            expired = cls._get_int_from_datetime(cls,datetime.now(timezone.utc) + cls._access_token_expires)
+        if not isinstance(identity, (str,int)):
+            raise TypeError("identity must be a string or integer")
+        if not isinstance(fresh, (bool)):
+            raise TypeError("fresh must be a boolean")
+
+        if isinstance(self._access_token_expires,timedelta):
+            expired = self._get_int_from_datetime(datetime.now(timezone.utc) + self._access_token_expires)
         else:
             try:
-                expired = cls._get_int_from_datetime(cls,datetime.now(timezone.utc)) + int(cls._access_token_expires)
+                expired = self._get_int_from_datetime(datetime.now(timezone.utc)) + int(self._access_token_expires)
             except Exception:
-                raise ValueError("The 'AUTHJWT_ACCESS_TOKEN_EXPIRES' must be an integer")
+                raise TypeError("The 'AUTHJWT_ACCESS_TOKEN_EXPIRES' must be a timedelta or integer")
 
-        return cls._create_token(
-            cls,
+        return self._create_token(
             identity=identity,
             type_token="access",
             fresh=fresh,
             exp_time=expired
         )
 
-    @classmethod
-    def create_refresh_token(cls,identity: Union[str,int]) -> bytes:
+    def create_refresh_token(self,identity: Union[str,int]) -> bytes:
         """
         Create a token with days for expired time (default), info for param and return please check to
         function create token
 
         :return: hash token
         """
-        if isinstance(cls._refresh_token_expires,timedelta):
-            expired = cls._get_int_from_datetime(cls,datetime.now(timezone.utc) + cls._refresh_token_expires)
+        if not isinstance(identity, (str,int)):
+            raise TypeError("identity must be a string or integer")
+
+        if isinstance(self._refresh_token_expires,timedelta):
+            expired = self._get_int_from_datetime(datetime.now(timezone.utc) + self._refresh_token_expires)
         else:
             try:
-                expired = cls._get_int_from_datetime(cls,datetime.now(timezone.utc)) + int(cls._refresh_token_expires)
+                expired = self._get_int_from_datetime(datetime.now(timezone.utc)) + int(self._refresh_token_expires)
             except Exception:
-                raise ValueError("The 'AUTHJWT_REFRESH_TOKEN_EXPIRES' must be an integer")
+                raise TypeError("The 'AUTHJWT_REFRESH_TOKEN_EXPIRES' must be a timedelta or integer")
 
-        return cls._create_token(
-            cls,
+        return self._create_token(
             identity=identity,
             type_token="refresh",
             exp_time=expired
@@ -280,14 +318,13 @@ class AuthJWT:
             return self._verified_token(encoded_token=self._token)
         return None
 
-    @classmethod
-    def get_jti(cls,encoded_token: bytes) -> str:
+    def get_jti(self,encoded_token: bytes) -> str:
         """
         Returns the JTI (unique identifier) of an encoded JWT
 
         :return: string of JTI
         """
-        return cls._verified_token(cls,encoded_token=encoded_token)['jti']
+        return self._verified_token(encoded_token=encoded_token)['jti']
 
     def get_jwt_identity(self) -> Optional[Union[str,int]]:
         """

@@ -9,8 +9,8 @@ AuthJWT._blacklist_enabled = 'true'
 AuthJWT._secret_key = 'secret-key'
 
 @AuthJWT.token_in_blacklist_loader
-def check_if_token_in_blacklist(*args,**kwargs):
-    jti = kwargs['decrypted_token']['jti']
+def check_if_token_in_blacklist(decrypted_token):
+    jti = decrypted_token['jti']
     return jti in blacklist
 
 @pytest.fixture(scope='function')
@@ -41,32 +41,32 @@ def client(monkeypatch):
     return client
 
 @pytest.fixture(scope='module')
-def access_token():
-    return AuthJWT.create_access_token(identity='test',fresh=True)
+def access_token(Authorize):
+    return Authorize.create_access_token(identity='test',fresh=True)
 
 @pytest.fixture(scope='module')
-def refresh_token():
-    return AuthJWT.create_refresh_token(identity='test')
+def refresh_token(Authorize):
+    return Authorize.create_refresh_token(identity='test')
 
 @pytest.mark.parametrize("url",["/jwt-required","/jwt-optional","/fresh-jwt-required"])
-def test_non_blacklisted_access_token(client,url,access_token):
+def test_non_blacklisted_access_token(client,url,access_token,Authorize):
     response = client.get(url,headers={"Authorization":f"Bearer {access_token.decode('utf-8')}"})
     assert response.status_code == 200
     assert response.json() == {'hello':'world'}
 
     # revoke token in last test url
     if url == "/fresh-jwt-required":
-        jti = AuthJWT.get_jti(access_token)
+        jti = Authorize.get_jti(access_token)
         blacklist.add(jti)
 
-def test_non_blacklisted_refresh_token(client,refresh_token):
+def test_non_blacklisted_refresh_token(client,refresh_token,Authorize):
     url = '/jwt-refresh-required'
     response = client.get(url,headers={"Authorization":f"Bearer {refresh_token.decode('utf-8')}"})
     assert response.status_code == 200
     assert response.json() == {'hello':'world'}
 
     # revoke token
-    jti = AuthJWT.get_jti(refresh_token)
+    jti = Authorize.get_jti(refresh_token)
     blacklist.add(jti)
 
 @pytest.mark.parametrize("url",["/jwt-required","/jwt-optional","/fresh-jwt-required"])
