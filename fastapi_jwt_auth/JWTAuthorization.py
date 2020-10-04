@@ -1,7 +1,7 @@
 import jwt, uuid, re, os
 from fastapi import Header, HTTPException
 from datetime import datetime, timezone, timedelta
-from typing import Optional, Dict, Union, Callable, Literal, List
+from typing import Optional, Dict, Union, Callable, List
 
 class AuthJWT:
     _access_token_expires = os.getenv("AUTHJWT_ACCESS_TOKEN_EXPIRES") or timedelta(minutes=15)
@@ -43,7 +43,7 @@ class AuthJWT:
     def _create_token(
         self,
         identity: Union[str,int],
-        type_token: Literal['access','refresh'],
+        type_token: str,
         exp_time: int,
         fresh: Optional[bool] = False
     ) -> bytes:
