@@ -85,3 +85,53 @@ def test_blacklist_enabled_without_callback(monkeypatch,client,Authorize):
     reset_config()
     with pytest.raises(RuntimeError,match=r"@AuthJWT.token_in_blacklist_loader"):
         response = client.get('/protected',headers={"Authorization": f"Bearer {token.decode('utf-8')}"})
+
+def test_load_env_from_outside():
+    # correct data
+    @AuthJWT.load_env
+    def get_valid_settings():
+        return [
+            ("authjwt_access_token_expires",timedelta(minutes=2)),
+            ("authjwt_refresh_token_expires",timedelta(days=5)),
+            ("authjwt_blacklist_enabled","false"),
+            ("authjwt_secret_key","testing"),
+            ("authjwt_algorithm","HS256")
+        ]
+
+    assert AuthJWT._access_token_expires == timedelta(minutes=2)
+    assert AuthJWT._refresh_token_expires == timedelta(days=5)
+    assert AuthJWT._blacklist_enabled == "false"
+    assert AuthJWT._secret_key == "testing"
+    assert AuthJWT._algorithm == "HS256"
+
+    with pytest.raises(ValueError):
+        @AuthJWT.load_env
+        def invalid_data():
+            return "test"
+
+    with pytest.raises(TypeError,match=r"AUTHJWT_ACCESS_TOKEN_EXPIRES"):
+        @AuthJWT.load_env
+        def get_invalid_access_token():
+            return [("authjwt_access_token_expires","lol")]
+
+    with pytest.raises(TypeError,match=r"AUTHJWT_REFRESH_TOKEN_EXPIRES"):
+        @AuthJWT.load_env
+        def get_invalid_refresh_token():
+            return [("authjwt_refresh_token_expires","lol")]
+
+    with pytest.raises(TypeError,match=r"AUTHJWT_BLACKLIST_ENABLED"):
+        @AuthJWT.load_env
+        def get_invalid_blacklist():
+            return [("authjwt_blacklist_enabled","test")]
+
+    with pytest.raises(TypeError,match=r"AUTHJWT_SECRET_KEY"):
+        @AuthJWT.load_env
+        def get_invalid_secret_key():
+            return [("authjwt_secret_key",123)]
+
+    with pytest.raises(TypeError,match=r"AUTHJWT_ALGORITHM"):
+        @AuthJWT.load_env
+        def get_invalid_algorithm():
+            return [("authjwt_algorithm",123)]
+
+    reset_config()

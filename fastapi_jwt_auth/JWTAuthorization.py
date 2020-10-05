@@ -133,35 +133,33 @@ class AuthJWT:
     @classmethod
     def load_env(cls, settings: Callable[...,List[tuple]]) -> "AuthJWT":
         try:
-            for setting in settings():
-                if setting[0].lower() == "authjwt_access_token_expires":
-                    if not isinstance(setting[1], (timedelta, int)):
+            for key, value in settings():
+                if key.lower() == "authjwt_access_token_expires":
+                    if not isinstance(value, (timedelta, int)):
                         raise TypeError("The 'AUTHJWT_ACCESS_TOKEN_EXPIRES' must be a timedelta or integer")
-                    cls._access_token_expires = setting[1]
+                    cls._access_token_expires = value
 
-                if setting[0].lower() == "authjwt_refresh_token_expires":
-                    if not isinstance(setting[1], (timedelta, int)):
+                if key.lower() == "authjwt_refresh_token_expires":
+                    if not isinstance(value, (timedelta, int)):
                         raise TypeError("The 'AUTHJWT_REFRESH_TOKEN_EXPIRES' must be a timedelta or integer")
-                    cls._refresh_token_expires = setting[1]
+                    cls._refresh_token_expires = value
 
-                if setting[0].lower() == "authjwt_blacklist_enabled":
-                    if not setting[1] in ['true','false']:
+                if key.lower() == "authjwt_blacklist_enabled":
+                    if value not in ['true','false']:
                         raise TypeError("The 'AUTHJWT_BLACKLIST_ENABLED' must be between 'true' or 'false'")
-                    cls._blacklist_enabled = setting[1]
+                    cls._blacklist_enabled = value
 
-                if setting[0].lower() == "authjwt_secret_key":
-                    if not isinstance(setting[1], str):
+                if key.lower() == "authjwt_secret_key":
+                    if not isinstance(value, str):
                         raise TypeError("The 'AUTHJWT_SECRET_KEY' must be an string")
-                    cls._secret_key = setting[1]
+                    cls._secret_key = value
 
-                if setting[0].lower() == "authjwt_algorithm":
-                    if not isinstance(setting[1], str):
+                if key.lower() == "authjwt_algorithm":
+                    if not isinstance(value, str):
                         raise TypeError("The 'AUTHJWT_ALGORITHM' must be an string")
-                    cls._algorithm = setting[1]
+                    cls._algorithm = value
         except TypeError:
             raise
-        except Exception:
-            raise ValueError("Config must be a list of tuple")
 
     @classmethod
     def token_in_blacklist_loader(cls, callback: Callable[...,bool]) -> "AuthJWT":
