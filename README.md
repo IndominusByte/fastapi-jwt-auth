@@ -165,11 +165,11 @@ Which algorithms are allowed to decode a JWT. Default value is `HS256`
 Examples are available on [examples](/examples) folder.
 There are:
 - [Basic](/examples/basic.py)
-- [Blacklist Token](/examples/blacklist.py)
-- [Blacklist Token Use Redis](/examples/blacklist_redis.py)
 - [Token Optional](/examples/optional_protected_endpoints.py)
 - [Refresh Token](/examples/refresh_tokens.py)
 - [Token Fresh](/examples/token_freshness.py)
+- [Blacklist Token](/examples/blacklist.py)
+- [Blacklist Token Use Redis](/examples/blacklist_redis.py)
 
 ## License
 This project is licensed under the terms of the MIT license.

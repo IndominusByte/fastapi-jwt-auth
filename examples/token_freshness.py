@@ -1,12 +1,6 @@
 from fastapi import FastAPI, Depends, HTTPException
-from pydantic import BaseModel, Field
 from fastapi_jwt_auth import AuthJWT
-
-# set secret key to environ variable with this command
-# export AUTHJWT_SECRET_KEY=secretkey, in terminal linux, macOS, Windows Bash
-# run app with this command uvicorn token_freshness:app --host 0.0.0.0 --port 5000
-# if you install python-dotenv run this command below
-# uvicorn token_freshness:app --host 0.0.0.0 --port 5000 --env-file .env
+from pydantic import BaseModel, Field
 
 app = FastAPI()
 
@@ -14,10 +8,9 @@ class User(BaseModel):
     username: str = Field(...,min_length=1)
     password: str = Field(...,min_length=1)
 
-# Standard login endpoint. Will return a fresh access token and
-# a refresh token
+# Standard login endpoint. Will return a fresh access token and a refresh token
 @app.post('/login',status_code=200)
-def login(user: User):
+def login(user: User, Authorize: AuthJWT = Depends()):
     if user.username != 'test' or user.password != 'test':
         raise HTTPException(status_code=401,detail='Bad username or password')
 
@@ -26,8 +19,8 @@ def login(user: User):
     # As we just verified their username and password, we are
     # going to mark the token as fresh here.
     ret = {
-        'access_token': AuthJWT.create_access_token(identity=user.username,fresh=True),
-        'refresh_token': AuthJWT.create_refresh_token(identity=user.username)
+        'access_token': Authorize.create_access_token(identity=user.username,fresh=True),
+        'refresh_token': Authorize.create_refresh_token(identity=user.username)
     }
 
     return ret
@@ -40,11 +33,7 @@ def refresh(Authorize: AuthJWT = Depends()):
     Authorize.jwt_refresh_token_required()
 
     current_user = Authorize.get_jwt_identity()
-    ret = {
-        'access_token': AuthJWT.create_access_token(identity=current_user,fresh=False)
-    }
-
-    return ret
+    return {'access_token': Authorize.create_access_token(identity=current_user,fresh=False)}
 
 # Any valid JWT can access this endpoint
 @app.get('/protected',status_code=200)

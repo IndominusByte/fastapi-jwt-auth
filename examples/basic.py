@@ -1,12 +1,14 @@
 from fastapi import FastAPI, Depends, HTTPException
-from pydantic import BaseModel, Field
 from fastapi_jwt_auth import AuthJWT
+from pydantic import BaseModel, Field
 
-# set secret key to environment variable with this command
-# export AUTHJWT_SECRET_KEY=secretkey, in terminal linux, macOS, Windows Bash
-# run app with this command uvicorn basic:app --host 0.0.0.0 --port 5000
-# if you install python-dotenv run this command below
-# uvicorn basic:app --host 0.0.0.0 --port 5000 --env-file .env
+"""
+set secret key to environment variable with this command
+export AUTHJWT_SECRET_KEY=secretkey, in terminal linux, macOS, Windows Bash
+run app with this command uvicorn basic:app --host 0.0.0.0
+if you install python-dotenv run this command below
+uvicorn basic:app --host 0.0.0.0 --port 5000 --env-file .env
+"""
 
 app = FastAPI()
 
@@ -18,12 +20,12 @@ class User(BaseModel):
 # function is used to actually generate the token, and you can return
 # it to the caller however you choose.
 @app.post('/login',status_code=200)
-def login(user: User):
+def login(user: User, Authorize: AuthJWT = Depends()):
     if user.username != 'test' or user.password != 'test':
         raise HTTPException(status_code=401,detail='Bad username or password')
 
-    # Identity can be any data that is json serializable
-    access_token = AuthJWT.create_access_token(identity=user.username)
+    # identity must be between string or integer
+    access_token = Authorize.create_access_token(identity=user.username)
     return {"access_token": access_token}
 
 @app.get('/protected',status_code=200)
