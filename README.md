@@ -218,7 +218,7 @@ There are:
 
 Optional:
 - [Use AuthJWT Without Dependency Injection](/examples/without_dependency.py)
-- [On Mutiple Files]()
+- [On Mutiple Files](/examples/multiple_files)
 
 ## License
 This project is licensed under the terms of the MIT license.
