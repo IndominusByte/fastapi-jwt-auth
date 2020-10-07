@@ -31,8 +31,8 @@ $Env:AUTHJWT_SECRET_KEY = "secretkey"
 - Create a file `basic.py` with:
 ```python
 from fastapi import FastAPI, Depends, HTTPException
-from pydantic import BaseModel, Field
 from fastapi_jwt_auth import AuthJWT
+from pydantic import BaseModel, Field
 
 app = FastAPI()
 
@@ -44,13 +44,13 @@ class User(BaseModel):
 # function is used to actually generate the token, and you can return
 # it to the caller however you choose.
 @app.post('/login',status_code=200)
-def login(user: User):
+def login(user: User, Authorize: AuthJWT = Depends()):
     if user.username != 'test' or user.password != 'test':
         raise HTTPException(status_code=401,detail='Bad username or password')
 
-    # Identity can be any data that is json serializable
-    access_token = AuthJWT.create_access_token(identity=user.username)
-    return access_token
+    # identity must be between string or integer
+    access_token = Authorize.create_access_token(identity=user.username)
+    return {"access_token": access_token}
 
 @app.get('/protected',status_code=200)
 def protected(Authorize: AuthJWT = Depends()):
@@ -61,16 +61,17 @@ def protected(Authorize: AuthJWT = Depends()):
     # Access the identity of the current user with get_jwt_identity
     current_user = Authorize.get_jwt_identity()
     return {"logged_in_as": current_user}
+
 ```
 ### Run it
 Run the server with:
 ```console
-$ uvicorn basic:app --host 0.0.0.0 --port 5000
+$ uvicorn basic:app --host 0.0.0.0
 
-INFO:     Started server process [6051]
+INFO:     Started server process [4235]
 INFO:     Waiting for application startup.
 INFO:     Application startup complete.
-INFO:     Uvicorn running on http://0.0.0.0:5000 (Press CTRL+C to quit)
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
 ```
 ### Access it
 To access a jwt_required protected url, all we have to do is send in the JWT with the request. By default, this is done with an authorization header that looks like:
@@ -79,27 +80,27 @@ Authorization: Bearer <access_token>
 ```
 We can see this in action using CURL:
 ```console
-$ curl http://localhost:5000/protected
+$ curl http://localhost:8000/protected
 
 {"detail":"Missing Authorization Header"}
 
 $ curl -H "Content-Type: application/json" -X POST \
-  -d '{"username":"test","password":"test"}' http://localhost:5000/login
+  -d '{"username":"test","password":"test"}' http://localhost:8000/login
  
 "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpYXQiOjE1OTczMzMxMzMsIm5iZiI6MTU5NzMzMzEzMywianRpIjoiNDczY2ExM2ItOWI1My00NDczLWJjZTctMWZiOWMzNTlmZmI0IiwiZXhwIjoxNTk3MzM0MDMzLCJpZGVudGl0eSI6InRlc3QiLCJ0eXBlIjoiYWNjZXNzIiwiZnJlc2giOmZhbHNlfQ.42CusQo6nsLxOk6bBUP1vnVX-REx4ZYBYYIjYChWf0c"
 
 $ export TOKEN=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpYXQiOjE1OTczMzMxMzMsIm5iZiI6MTU5NzMzMzEzMywianRpIjoiNDczY2ExM2ItOWI1My00NDczLWJjZTctMWZiOWMzNTlmZmI0IiwiZXhwIjoxNTk3MzM0MDMzLCJpZGVudGl0eSI6InRlc3QiLCJ0eXBlIjoiYWNjZXNzIiwiZnJlc2giOmZhbHNlfQ.42CusQo6nsLxOk6bBUP1vnVX-REx4ZYBYYIjYChWf0c
 
-$ curl -H "Authorization: Bearer $TOKEN" http://localhost:5000/protected
+$ curl -H "Authorization: Bearer $TOKEN" http://localhost:8000/protected
 
 {"logged_in_as":"test"}
 ```
 ## Extract Token
 Access all URL to see what the result
 ```python
-from pydantic import BaseModel, Field
 from fastapi import FastAPI, Depends, HTTPException
 from fastapi_jwt_auth import AuthJWT
+from pydantic import BaseModel, Field
 
 app = FastAPI()
 
@@ -108,18 +109,18 @@ class User(BaseModel):
     password: str = Field(...,min_length=1)
 
 @app.post('/login',status_code=200)
-def login(user: User):
+def login(user: User, Authorize: AuthJWT = Depends()):
     if user.username != 'test' or user.password != 'test':
         raise HTTPException(status_code=401,detail='Bad username or password')
 
-    access_token = AuthJWT.create_access_token(identity=user.username)
+    access_token = Authorize.create_access_token(identity=user.username)
     return access_token
 
 # Returns the JTI (unique identifier) of an encoded JWT
 @app.get('/get-jti',status_code=200)
-def get_jti():
-    access_token = AuthJWT.create_access_token(identity='test')
-    return AuthJWT.get_jti(encoded_token=access_token)
+def get_jti(Authorize: AuthJWT = Depends()):
+    access_token = Authorize.create_access_token(identity='test')
+    return Authorize.get_jti(encoded_token=access_token)
 
 # this will return the identity of the JWT that is accessing this endpoint.
 # If no JWT is present, `None` is returned instead.
