@@ -3,7 +3,7 @@
 [![Build Status](https://travis-ci.org/IndominusByte/fastapi-jwt-auth.svg?branch=master)](https://travis-ci.org/IndominusByte/fastapi-jwt-auth)
 [![Coverage Status](https://coveralls.io/repos/github/IndominusByte/fastapi-jwt-auth/badge.svg?branch=master)](https://coveralls.io/github/IndominusByte/fastapi-jwt-auth?branch=master)
 [![PyPI version](https://badge.fury.io/py/fastapi-jwt-auth.svg)](https://badge.fury.io/py/fastapi-jwt-auth)
-![GitHub](https://img.shields.io/github/license/IndominusByte/fastapi-jwt-auth)
+[![Downloads](https://pepy.tech/badge/fastapi-jwt-auth)](https://pepy.tech/project/fastapi-jwt-auth)
 
 ## Features
 FastAPI extension that provides JWT Auth support (secure, easy to use and lightweight), if you were familiar with flask-jwt-extended this extension suitable for you because this extension inspired by flask-jwt-extended.
@@ -142,7 +142,7 @@ def get_raw_jwt(Authorize: AuthJWT = Depends()):
     return {"token": token}
 ```
 
-## Configuration Options
+## Configuration Options (env)
 - `AUTHJWT_ACCESS_TOKEN_EXPIRES`<br/>
 How long an access token should live before it expires. If you not define in env variable
 default value is `15 minutes`. Or you can custom with value `int` (seconds), example
@@ -162,6 +162,49 @@ The secret key needed for symmetric based signing algorithms, such as HS*. If th
 - `AUTHJWT_ALGORITHM`<br/>
 Which algorithms are allowed to decode a JWT. Default value is `HS256`
 
+## Configuration (pydantic or list[tuple])
+You can convert and validate type data from dotenv through pydantic (BaseSettings)
+```python
+from fastapi_jwt_auth import AuthJWT
+from pydantic import BaseSettings
+from datetime import timedelta
+from typing import Literal
+
+# dotenv file parsing requires python-dotenv to be installed
+# This can be done with either pip install python-dotenv
+class Settings(BaseSettings):
+    authjwt_access_token_expires: timedelta = timedelta(minutes=15)
+    authjwt_refresh_token_expires: timedelta = timedelta(days=30)
+    # literal type only available for python 3.8
+    authjwt_blacklist_enabled: Literal['true','false']
+    authjwt_secret_key: str
+    authjwt_algorithm: str = 'HS256'
+
+    class Config:
+        env_file = '.env'
+        env_file_encoding = 'utf-8'
+
+
+@AuthJWT.load_env
+def get_settings():
+    return Settings()
+    # or you can just parse a list of tuple
+    # return [
+    #     ("authjwt_access_token_expires",timedelta(minutes=2)),
+    #     ("authjwt_refresh_token_expires",timedelta(days=5)),
+    #     ("authjwt_blacklist_enabled","false"),
+    #     ("authjwt_secret_key","testing"),
+    #     ("authjwt_algorithm","HS256")
+    # ]
+
+
+print(AuthJWT._access_token_expires)
+print(AuthJWT._refresh_token_expires)
+print(AuthJWT._blacklist_enabled)
+print(AuthJWT._secret_key)
+print(AuthJWT._algorithm)
+```
+
 ## Examples
 Examples are available on [examples](/examples) folder.
 There are:
@@ -171,6 +214,10 @@ There are:
 - [Token Fresh](/examples/token_freshness.py)
 - [Blacklist Token](/examples/blacklist.py)
 - [Blacklist Token Use Redis](/examples/blacklist_redis.py)
+
+Optional:
+- [Use AuthJWT Without Dependency Injection](/examples/without_dependency.py)
+- [On Mutiple Files]()
 
 ## License
 This project is licensed under the terms of the MIT license.
