@@ -47,7 +47,8 @@ class AuthJWT:
         identity: Union[str,int],
         type_token: str,
         exp_time: int,
-        fresh: Optional[bool] = False
+        fresh: Optional[bool] = False,
+        headers: Optional[Dict] = None
     ) -> bytes:
         """
         This function create token for access_token and refresh_token, when type_token
@@ -87,7 +88,8 @@ class AuthJWT:
         return jwt.encode(
             payload,
             self._secret_key,
-            algorithm=self._algorithm
+            algorithm=self._algorithm,
+            headers=headers
         )
 
     def _verified_token(self,encoded_token: bytes) -> Dict[str,Union[str,int,bool]]:
@@ -206,7 +208,12 @@ class AuthJWT:
         if self._token_in_blacklist_callback.__func__(raw_token):
             raise HTTPException(status_code=401,detail="Token has been revoked")
 
-    def create_access_token(self,identity: Union[str,int], fresh: Optional[bool] = False) -> bytes:
+    def create_access_token(
+        self,
+        identity: Union[str,int],
+        fresh: Optional[bool] = False,
+        headers: Optional[Dict] = None
+    ) -> bytes:
         """
         Create a token with minutes for expired time (default), info for param and return please check to
         function create token
@@ -229,11 +236,16 @@ class AuthJWT:
         return self._create_token(
             identity=identity,
             type_token="access",
+            exp_time=expired,
             fresh=fresh,
-            exp_time=expired
+            headers=headers
         )
 
-    def create_refresh_token(self,identity: Union[str,int]) -> bytes:
+    def create_refresh_token(
+        self,
+        identity: Union[str,int],
+        headers: Optional[Dict] = None
+    ) -> bytes:
         """
         Create a token with days for expired time (default), info for param and return please check to
         function create token
@@ -254,7 +266,8 @@ class AuthJWT:
         return self._create_token(
             identity=identity,
             type_token="refresh",
-            exp_time=expired
+            exp_time=expired,
+            headers=headers
         )
 
     def jwt_required(self) -> None:
@@ -336,3 +349,8 @@ class AuthJWT:
         if self._token:
             return self._verified_token(encoded_token=self._token)['identity']
         return None
+
+    def get_unverified_jwt_headers(self,encoded_token: Optional[bytes] = None) -> dict:
+        encoded_token = encoded_token or self._token
+
+        return jwt.get_unverified_header(encoded_token)
