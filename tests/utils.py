@@ -4,6 +4,7 @@ from datetime import timedelta
 def reset_config():
     AuthJWT._access_token_expires = timedelta(minutes=15)
     AuthJWT._refresh_token_expires = timedelta(days=30)
+    AuthJWT._decode_leeway = 0
     AuthJWT._blacklist_enabled = None
     AuthJWT._secret_key = None
     AuthJWT._algorithm = "HS256"

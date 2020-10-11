@@ -8,6 +8,7 @@ from typing import Optional, Dict, Union, Callable, List
 class AuthJWT:
     _access_token_expires = timedelta(minutes=15)
     _refresh_token_expires = timedelta(days=30)
+    _decode_leeway = 0
     _blacklist_enabled = None
     _secret_key = None
     _algorithm = "HS256"
@@ -58,6 +59,7 @@ class AuthJWT:
         :param type_token: for indicate token is access_token or refresh_token
         :param exp_time: Set the duration of the JWT
         :param fresh: Optional when token is access_token this param required
+        :param headers: valid dict for specifying additional headers in JWT header section
 
         :return: Encoded token
         """
@@ -109,6 +111,7 @@ class AuthJWT:
             return jwt.decode(
                 encoded_token,
                 self._secret_key,
+                leeway=self._decode_leeway,
                 algorithms=self._algorithm
             )
         except jwt.exceptions.ExpiredSignatureError as err:
@@ -162,6 +165,11 @@ class AuthJWT:
                     if not isinstance(value, str):
                         raise TypeError("The 'AUTHJWT_ALGORITHM' must be an string")
                     cls._algorithm = value
+
+                if key.lower() == "authjwt_decode_leeway":
+                    if not isinstance(value, (timedelta, int)):
+                        raise TypeError("The 'AUTHJWT_DECODE_LEEWAY' must be a timedelta or integer")
+                    cls._decode_leeway = value
         except TypeError:
             raise
 
@@ -351,6 +359,12 @@ class AuthJWT:
         return None
 
     def get_unverified_jwt_headers(self,encoded_token: Optional[bytes] = None) -> dict:
+        """
+        Returns the Headers of an encoded JWT without verifying the actual signature of JWT
+
+        :param encoded_token: The encoded JWT to get the Header from
+        :return: JWT header parameters as a dictionary
+        """
         encoded_token = encoded_token or self._token
 
         return jwt.get_unverified_header(encoded_token)

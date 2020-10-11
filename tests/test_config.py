@@ -31,49 +31,7 @@ def test_default_config():
     assert AuthJWT._algorithm == 'HS256'
     assert AuthJWT._token_in_blacklist_callback is None
     assert AuthJWT._token is None
-
-def test_token_with_other_value():
-    class Settings(BaseSettings):
-        authjwt_access_token_expires: timedelta = timedelta(minutes=1)
-        authjwt_refresh_token_expires: timedelta = timedelta(days=1)
-
-    @AuthJWT.load_env
-    def get_settings():
-        return Settings()
-
-    assert timedelta(minutes=1) == AuthJWT._access_token_expires
-    assert timedelta(days=1) == AuthJWT._refresh_token_expires
-
-def test_token_config_not_int_or_timedelta():
-    class SettingsOne(BaseSettings):
-        authjwt_access_token_expires: str = "test"
-
-    with pytest.raises(TypeError,match=r"AUTHJWT_ACCESS_TOKEN_EXPIRES"):
-        @AuthJWT.load_env
-        def get_settings_one():
-            return SettingsOne()
-
-    class SettingsTwo(BaseSettings):
-        authjwt_refresh_token_expires: str = "test"
-
-    with pytest.raises(TypeError,match=r"AUTHJWT_REFRESH_TOKEN_EXPIRES"):
-        @AuthJWT.load_env
-        def get_settings_two():
-            return SettingsTwo()
-
-def test_state_class_with_other_value_except_token():
-    class Settings(BaseSettings):
-        authjwt_blacklist_enabled: str = "true"
-        authjwt_secret_key: str = "test"
-        authjwt_algorithm: str = "test"
-
-    @AuthJWT.load_env
-    def get_settings():
-        return Settings()
-
-    assert AuthJWT._blacklist_enabled == 'true'
-    assert AuthJWT._secret_key == 'test'
-    assert AuthJWT._algorithm == 'test'
+    assert AuthJWT._decode_leeway == 0
 
 def test_secret_key_not_exist(client,Authorize):
     reset_config()
@@ -88,8 +46,7 @@ def test_blacklist_enabled_without_callback(client,Authorize):
     # set authjwt_secret_key for create token
     class SettingsOne(BaseSettings):
         authjwt_secret_key: str = "secret-key"
-        # AuthJWT blacklist won't trigger if value
-        # env variable AUTHJWT_BLACKLIST_ENABLED not true
+        # AuthJWT blacklist won't trigger if value not str 'true'
         authjwt_blacklist_enabled: str = "false"
 
     @AuthJWT.load_env
@@ -97,6 +54,7 @@ def test_blacklist_enabled_without_callback(client,Authorize):
         return SettingsOne()
 
     token = Authorize.create_access_token(identity='test')
+
     response = client.get('/protected',headers={"Authorization": f"Bearer {token.decode('utf-8')}"})
     assert response.status_code == 200
 
@@ -112,18 +70,21 @@ def test_blacklist_enabled_without_callback(client,Authorize):
 
 def test_load_env_from_outside():
     # correct data
+    class Settings(BaseSettings):
+        authjwt_access_token_expires: timedelta = timedelta(minutes=2)
+        authjwt_refresh_token_expires: timedelta = timedelta(days=5)
+        authjwt_decode_leeway: timedelta = timedelta(seconds=8)
+        authjwt_blacklist_enabled: str = "false"
+        authjwt_secret_key: str = "testing"
+        authjwt_algorithm: str = "HS256"
+
     @AuthJWT.load_env
     def get_valid_settings():
-        return [
-            ("authjwt_access_token_expires",timedelta(minutes=2)),
-            ("authjwt_refresh_token_expires",timedelta(days=5)),
-            ("authjwt_blacklist_enabled","false"),
-            ("authjwt_secret_key","testing"),
-            ("authjwt_algorithm","HS256")
-        ]
+        return Settings()
 
     assert AuthJWT._access_token_expires == timedelta(minutes=2)
     assert AuthJWT._refresh_token_expires == timedelta(days=5)
+    assert AuthJWT._decode_leeway == timedelta(seconds=8)
     assert AuthJWT._blacklist_enabled == "false"
     assert AuthJWT._secret_key == "testing"
     assert AuthJWT._algorithm == "HS256"
@@ -157,5 +118,10 @@ def test_load_env_from_outside():
         @AuthJWT.load_env
         def get_invalid_algorithm():
             return [("authjwt_algorithm",123)]
+
+    with pytest.raises(TypeError,match=r"AUTHJWT_DECODE_LEEWAY"):
+        @AuthJWT.load_env
+        def get_invalid_decode_leeway():
+            return [("authjwt_decode_leeway","test")]
 
     reset_config()

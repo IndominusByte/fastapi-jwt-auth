@@ -21,7 +21,7 @@ def check_if_token_in_blacklist(decrypted_token):
     return jti in blacklist
 
 @pytest.fixture(scope='function')
-def client(monkeypatch):
+def client():
     app = FastAPI()
 
     @app.get('/jwt-required')

@@ -23,15 +23,10 @@ def client():
         Authorize.jwt_required()
         return Authorize.get_jwt_identity()
 
-    @app.get('/get_headers_access')
-    def get_headers_access(Authorize: AuthJWT = Depends()):
-        Authorize.jwt_required()
-        return Authorize.get_unverified_jwt_headers()
-
-    @app.get('/get_headers_refresh')
-    def get_headers_refresh(Authorize: AuthJWT = Depends()):
+    @app.get('/refresh_token')
+    def get_refresh_token(Authorize: AuthJWT = Depends()):
         Authorize.jwt_refresh_token_required()
-        return Authorize.get_unverified_jwt_headers()
+        return Authorize.get_jwt_identity()
 
     client = TestClient(app)
     return client
@@ -49,14 +44,14 @@ def default_access_token():
 def encoded_token(default_access_token):
     return jwt.encode(default_access_token,'secret-key',algorithm='HS256')
 
-def test_verified_token(client,monkeypatch,encoded_token,Authorize):
-    class Settings(BaseSettings):
+def test_verified_token(client,encoded_token,Authorize):
+    class SettingsOne(BaseSettings):
         AUTHJWT_SECRET_KEY: str = "secret-key"
         AUTHJWT_ACCESS_TOKEN_EXPIRES: int = 1
 
     @AuthJWT.load_env
-    def get_settings():
-        return Settings()
+    def get_settings_one():
+        return SettingsOne()
 
     # DecodeError
     response = client.get('/protected',headers={"Authorization":"Bearer test"})
@@ -79,6 +74,30 @@ def test_verified_token(client,monkeypatch,encoded_token,Authorize):
     assert response.status_code == 422
     assert response.json() == {'detail': 'The specified alg value is not allowed'}
 
+    class SettingsTwo(BaseSettings):
+        AUTHJWT_SECRET_KEY: str = "secret-key"
+        AUTHJWT_ACCESS_TOKEN_EXPIRES: int = 1
+        AUTHJWT_REFRESH_TOKEN_EXPIRES: int = 1
+        AUTHJWT_DECODE_LEEWAY: int = 2
+
+    @AuthJWT.load_env
+    def get_settings_two():
+        return SettingsTwo()
+
+    access_token = Authorize.create_access_token(identity='test')
+    refresh_token = Authorize.create_refresh_token(identity='test')
+    time.sleep(2)
+    # JWT payload is now expired
+    # But with some leeway, it will still validate
+    response = client.get('/protected',headers={"Authorization":f"Bearer {access_token.decode('utf-8')}"})
+    assert response.status_code == 200
+    assert response.json() == {'hello':'world'}
+
+    response = client.get('/refresh_token',headers={"Authorization":f"Bearer {refresh_token.decode('utf-8')}"})
+    assert response.status_code == 200
+    assert response.json() == "test"
+
+    # Valid Token
     response = client.get('/protected',headers={"Authorization":f"Bearer {encoded_token.decode('utf-8')}"})
     assert response.status_code == 200
     assert response.json() == {'hello':'world'}
@@ -95,20 +114,3 @@ def test_get_jwt_identity(client,default_access_token,encoded_token):
     response = client.get('/get_identity',headers={"Authorization":f"Bearer {encoded_token.decode('utf-8')}"})
     assert response.status_code == 200
     assert response.json() == default_access_token['identity']
-
-def test_jwt_headers(Authorize):
-    access_token = Authorize.create_access_token(identity=1,headers={'access':'bar'})
-    refresh_token = Authorize.create_refresh_token(identity=2,headers={'refresh':'foo'})
-
-    assert Authorize.get_unverified_jwt_headers(access_token)['access'] == 'bar'
-    assert Authorize.get_unverified_jwt_headers(refresh_token)['refresh'] == 'foo'
-
-def test_jwt_headers_from_request(client, Authorize):
-    access_token = Authorize.create_access_token(identity=1,headers={'access':'bar'})
-    refresh_token = Authorize.create_refresh_token(identity=2,headers={'refresh':'foo'})
-
-    response = client.get('/get_headers_access',headers={"Authorization":f"Bearer {access_token.decode('utf-8')}"})
-    assert response.json()['access'] == 'bar'
-
-    response = client.get('/get_headers_refresh',headers={"Authorization":f"Bearer {refresh_token.decode('utf-8')}"})
-    assert response.json()['refresh'] == 'foo'
