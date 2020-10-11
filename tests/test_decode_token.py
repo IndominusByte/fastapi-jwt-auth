@@ -1,8 +1,8 @@
 import pytest, jwt, time
-from .utils import reset_config
 from fastapi_jwt_auth import AuthJWT
 from fastapi import FastAPI, Depends
 from fastapi.testclient import TestClient
+from pydantic import BaseSettings
 
 @pytest.fixture(scope='function')
 def client():
@@ -40,9 +40,14 @@ def encoded_token(default_access_token):
     return jwt.encode(default_access_token,'secret-key',algorithm='HS256')
 
 def test_verified_token(client,monkeypatch,encoded_token,Authorize):
-    monkeypatch.setenv("AUTHJWT_SECRET_KEY","secret-key")
-    monkeypatch.setenv("AUTHJWT_ACCESS_TOKEN_EXPIRES","1")
-    reset_config()
+    class Settings(BaseSettings):
+        AUTHJWT_SECRET_KEY: str = "secret-key"
+        AUTHJWT_ACCESS_TOKEN_EXPIRES: int = 1
+
+    @AuthJWT.load_env
+    def get_settings():
+        return Settings()
+
     # DecodeError
     response = client.get('/protected',headers={"Authorization":"Bearer test"})
     assert response.status_code == 422

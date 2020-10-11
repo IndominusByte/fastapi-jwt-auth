@@ -2,11 +2,18 @@ import pytest
 from fastapi_jwt_auth import AuthJWT
 from fastapi import FastAPI, Depends
 from fastapi.testclient import TestClient
+from pydantic import BaseSettings
 
 # setting for blacklist token
 blacklist = set()
-AuthJWT._blacklist_enabled = 'true'
-AuthJWT._secret_key = 'secret-key'
+
+class Settings(BaseSettings):
+    authjwt_blacklist_enabled: str = 'true'
+    authjwt_secret_key: str = 'secret-key'
+
+@AuthJWT.load_env
+def get_settings():
+    return Settings()
 
 @AuthJWT.token_in_blacklist_loader
 def check_if_token_in_blacklist(decrypted_token):

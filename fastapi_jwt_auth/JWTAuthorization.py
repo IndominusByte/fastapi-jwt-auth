@@ -1,14 +1,16 @@
-import jwt, uuid, re, os
+import jwt
+from re import match
+from uuid import uuid4
 from fastapi import Header, HTTPException
 from datetime import datetime, timezone, timedelta
 from typing import Optional, Dict, Union, Callable, List
 
 class AuthJWT:
-    _access_token_expires = os.getenv("AUTHJWT_ACCESS_TOKEN_EXPIRES") or timedelta(minutes=15)
-    _refresh_token_expires = os.getenv("AUTHJWT_REFRESH_TOKEN_EXPIRES") or timedelta(days=30)
-    _blacklist_enabled = os.getenv("AUTHJWT_BLACKLIST_ENABLED") or None
-    _secret_key = os.getenv("AUTHJWT_SECRET_KEY") or None
-    _algorithm = os.getenv("AUTHJWT_ALGORITHM") or "HS256"
+    _access_token_expires = timedelta(minutes=15)
+    _refresh_token_expires = timedelta(days=30)
+    _blacklist_enabled = None
+    _secret_key = None
+    _algorithm = "HS256"
     _token_in_blacklist_callback = None
     _token = None
 
@@ -19,7 +21,7 @@ class AuthJWT:
         :param Authorization: get Authorization from the header when class initialize
         """
         if authorization:
-            if re.match(r"Bearer\s",authorization) and len(authorization.split(' ')) == 2 and authorization.split(' ')[1]:
+            if match(r"Bearer\s",authorization) and len(authorization.split(' ')) == 2 and authorization.split(' ')[1]:
                 self._token = authorization.split(' ')[1]
                 # verified token and check if token is revoked
                 raw_token = self._verified_token(encoded_token=self._token)
@@ -28,7 +30,7 @@ class AuthJWT:
                 raise HTTPException(status_code=422,detail="Bad Authorization header. Expected value 'Bearer <JWT>'")
 
     def _get_jwt_identifier(self) -> str:
-        return str(uuid.uuid4())
+        return str(uuid4())
 
     def _get_int_from_datetime(self,value: datetime) -> int:
         """
