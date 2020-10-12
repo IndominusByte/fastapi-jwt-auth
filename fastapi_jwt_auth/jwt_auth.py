@@ -8,12 +8,12 @@ from datetime import datetime, timezone, timedelta
 from typing import Optional, Dict, Union, Callable, List
 
 class AuthJWT:
-    _access_token_expires = None
-    _refresh_token_expires = None
-    _decode_leeway = None
+    _access_token_expires = timedelta(minutes=15)
+    _refresh_token_expires = timedelta(days=30)
+    _decode_leeway = 0
     _blacklist_enabled = None
     _secret_key = None
-    _algorithm = None
+    _algorithm = "HS256"
     _token_in_blacklist_callback = None
     _token = None
 
@@ -119,27 +119,7 @@ class AuthJWT:
                 leeway=self._decode_leeway,
                 algorithms=self._algorithm
             )
-        except jwt.exceptions.ExpiredSignatureError as err:
-            raise HTTPException(status_code=422,detail=str(err))
-        except jwt.exceptions.DecodeError as err:
-            raise HTTPException(status_code=422,detail=str(err))
-        except jwt.exceptions.InvalidAlgorithmError as err:
-            raise HTTPException(status_code=422,detail=str(err))
-        except jwt.exceptions.InvalidKeyError as err:
-            raise HTTPException(status_code=422,detail=str(err))
-        except jwt.exceptions.InvalidTokenError as err:
-            raise HTTPException(status_code=422,detail=str(err))
-        except jwt.exceptions.InvalidIssuerError as err:
-            raise HTTPException(status_code=422,detail=str(err))
-        except jwt.exceptions.InvalidAudienceError as err:
-            raise HTTPException(status_code=422,detail=str(err))
-        except jwt.exceptions.InvalidIssuedAtError as err:
-            raise HTTPException(status_code=422,detail=str(err))
-        except jwt.exceptions.InvalidSignatureError as err:
-            raise HTTPException(status_code=422,detail=str(err))
-        except jwt.exceptions.ImmatureSignatureError as err:
-            raise HTTPException(status_code=422,detail=str(err))
-        except jwt.exceptions.MissingRequiredClaimError as err:
+        except Exception as err:
             raise HTTPException(status_code=422,detail=str(err))
 
     @classmethod
