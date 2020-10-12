@@ -47,7 +47,7 @@ class AuthJWT:
         self,
         identity: Union[str,int],
         type_token: str,
-        exp_time: int,
+        exp_time: Optional[int],
         fresh: Optional[bool] = False,
         headers: Optional[Dict] = None
     ) -> bytes:
@@ -72,23 +72,26 @@ class AuthJWT:
                 "AUTHJWT_SECRET_KEY must be set when using symmetric algorithm {}".format(self._algorithm)
             )
 
-        # passing instance itself because we call create_access_token
-        # and create_refresh_token with classmethod
         payload = {
             "iat": self._get_int_from_datetime(datetime.now(timezone.utc)),
             "nbf": self._get_int_from_datetime(datetime.now(timezone.utc)),
             "jti": self._get_jwt_identifier(),
-            "exp": exp_time,
+        }
+
+        user_claim = {
             "identity": identity,
             "type": type_token
         }
 
         # for access_token only fresh needed
         if type_token == 'access':
-            payload['fresh'] = fresh
+            user_claim['fresh'] = fresh
+
+        if exp_time:
+            payload['exp'] = exp_time
 
         return jwt.encode(
-            payload,
+            {**payload, **user_claim},
             self._secret_key,
             algorithm=self._algorithm,
             headers=headers
@@ -220,11 +223,12 @@ class AuthJWT:
         self,
         identity: Union[str,int],
         fresh: Optional[bool] = False,
-        headers: Optional[Dict] = None
+        headers: Optional[Dict] = None,
+        expires_time: Optional[Union[timedelta,int,bool]] = None
     ) -> bytes:
         """
-        Create a token with minutes for expired time (default), info for param and return please check to
-        function create token
+        Create a access token with 15 minutes for expired time (default),
+        info for param and return please check to function create token
 
         :return: hash token
         """
@@ -232,14 +236,22 @@ class AuthJWT:
             raise TypeError("identity must be a string or integer")
         if not isinstance(fresh, (bool)):
             raise TypeError("fresh must be a boolean")
+        if expires_time and not isinstance(expires_time, (timedelta,int,bool)):
+            raise TypeError("expires_time must be between timedelta, int, bool")
 
-        if isinstance(self._access_token_expires,timedelta):
-            expired = self._get_int_from_datetime(datetime.now(timezone.utc) + self._access_token_expires)
+        # Dynamic token expired
+        # if expires_time is False exp claim not created
+        if expires_time is not False:
+            expires_time = expires_time or self._access_token_expires
+
+            if isinstance(expires_time, bool):
+                expires_time = self._access_token_expires
+            if isinstance(expires_time, timedelta):
+                expires_time = int(expires_time.total_seconds())
+
+            expired = self._get_int_from_datetime(datetime.now(timezone.utc)) + expires_time
         else:
-            try:
-                expired = self._get_int_from_datetime(datetime.now(timezone.utc)) + int(self._access_token_expires)
-            except Exception:
-                raise TypeError("The 'AUTHJWT_ACCESS_TOKEN_EXPIRES' must be a timedelta or integer")
+            expired = None
 
         return self._create_token(
             identity=identity,
@@ -252,24 +264,33 @@ class AuthJWT:
     def create_refresh_token(
         self,
         identity: Union[str,int],
-        headers: Optional[Dict] = None
+        headers: Optional[Dict] = None,
+        expires_time: Optional[Union[timedelta,int,bool]] = None
     ) -> bytes:
         """
-        Create a token with days for expired time (default), info for param and return please check to
-        function create token
+        Create a refresh token with 30 days for expired time (default),
+        info for param and return please check to function create token
 
         :return: hash token
         """
         if not isinstance(identity, (str,int)):
             raise TypeError("identity must be a string or integer")
+        if expires_time and not isinstance(expires_time, (timedelta,int,bool)):
+            raise TypeError("expires_time must be between timedelta, int, bool")
 
-        if isinstance(self._refresh_token_expires,timedelta):
-            expired = self._get_int_from_datetime(datetime.now(timezone.utc) + self._refresh_token_expires)
+        # Dynamic token expired
+        # if expires_time is False exp claim not created
+        if expires_time is not False:
+            expires_time = expires_time or self._refresh_token_expires
+
+            if isinstance(expires_time, bool):
+                expires_time = self._refresh_token_expires
+            if isinstance(expires_time, timedelta):
+                expires_time = int(expires_time.total_seconds())
+
+            expired = self._get_int_from_datetime(datetime.now(timezone.utc)) + expires_time
         else:
-            try:
-                expired = self._get_int_from_datetime(datetime.now(timezone.utc)) + int(self._refresh_token_expires)
-            except Exception:
-                raise TypeError("The 'AUTHJWT_REFRESH_TOKEN_EXPIRES' must be a timedelta or integer")
+            expired = None
 
         return self._create_token(
             identity=identity,
