@@ -1,1 +1,1 @@
-from .JWTAuthorization import AuthJWT
+from .jwt_auth import AuthJWT

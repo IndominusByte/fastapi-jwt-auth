@@ -11,7 +11,7 @@ class Settings(BaseSettings):
     authjwt_blacklist_enabled: str = 'true'
     authjwt_secret_key: str = 'secret-key'
 
-@AuthJWT.load_env
+@AuthJWT.load_config
 def get_settings():
     return Settings()
 

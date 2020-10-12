@@ -1,17 +1,19 @@
 import jwt
 from re import match
 from uuid import uuid4
+from pydantic import ValidationError
 from fastapi import Header, HTTPException
+from fastapi_jwt_auth.config import LoadSettings
 from datetime import datetime, timezone, timedelta
 from typing import Optional, Dict, Union, Callable, List
 
 class AuthJWT:
-    _access_token_expires = timedelta(minutes=15)
-    _refresh_token_expires = timedelta(days=30)
-    _decode_leeway = 0
+    _access_token_expires = None
+    _refresh_token_expires = None
+    _decode_leeway = None
     _blacklist_enabled = None
     _secret_key = None
-    _algorithm = "HS256"
+    _algorithm = None
     _token_in_blacklist_callback = None
     _token = None
 
@@ -141,40 +143,20 @@ class AuthJWT:
             raise HTTPException(status_code=422,detail=str(err))
 
     @classmethod
-    def load_env(cls, settings: Callable[...,List[tuple]]) -> "AuthJWT":
+    def load_config(cls, settings: Callable[...,List[tuple]]) -> "AuthJWT":
         try:
-            for key, value in settings():
-                if key.lower() == "authjwt_access_token_expires":
-                    if not isinstance(value, (timedelta, int)):
-                        raise TypeError("The 'AUTHJWT_ACCESS_TOKEN_EXPIRES' must be a timedelta or integer")
-                    cls._access_token_expires = value
+            config = LoadSettings(**{key.lower():value for key,value in settings()})
 
-                if key.lower() == "authjwt_refresh_token_expires":
-                    if not isinstance(value, (timedelta, int)):
-                        raise TypeError("The 'AUTHJWT_REFRESH_TOKEN_EXPIRES' must be a timedelta or integer")
-                    cls._refresh_token_expires = value
-
-                if key.lower() == "authjwt_blacklist_enabled":
-                    if value not in ['true','false']:
-                        raise TypeError("The 'AUTHJWT_BLACKLIST_ENABLED' must be between 'true' or 'false'")
-                    cls._blacklist_enabled = value
-
-                if key.lower() == "authjwt_secret_key":
-                    if not isinstance(value, str):
-                        raise TypeError("The 'AUTHJWT_SECRET_KEY' must be an string")
-                    cls._secret_key = value
-
-                if key.lower() == "authjwt_algorithm":
-                    if not isinstance(value, str):
-                        raise TypeError("The 'AUTHJWT_ALGORITHM' must be an string")
-                    cls._algorithm = value
-
-                if key.lower() == "authjwt_decode_leeway":
-                    if not isinstance(value, (timedelta, int)):
-                        raise TypeError("The 'AUTHJWT_DECODE_LEEWAY' must be a timedelta or integer")
-                    cls._decode_leeway = value
-        except TypeError:
+            cls._access_token_expires = config.authjwt_access_token_expires
+            cls._refresh_token_expires = config.authjwt_refresh_token_expires
+            cls._decode_leeway = config.authjwt_decode_leeway
+            cls._blacklist_enabled = config.authjwt_blacklist_enabled
+            cls._secret_key = config.authjwt_secret_key
+            cls._algorithm = config.authjwt_algorithm
+        except ValidationError:
             raise
+        except Exception:
+            raise TypeError("Config must be pydantic 'BaseSettings' or list of tuple")
 
     @classmethod
     def token_in_blacklist_loader(cls, callback: Callable[...,bool]) -> "AuthJWT":

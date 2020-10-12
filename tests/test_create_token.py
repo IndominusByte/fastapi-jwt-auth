@@ -9,7 +9,7 @@ def test_create_access_token(Authorize):
         AUTHJWT_ACCESS_TOKEN_EXPIRES: int = 1
         AUTHJWT_REFRESH_TOKEN_EXPIRES: int = 2
 
-    @AuthJWT.load_env
+    @AuthJWT.load_config
     def get_settings():
         return Settings()
 

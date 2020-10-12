@@ -49,7 +49,7 @@ def test_verified_token(client,encoded_token,Authorize):
         AUTHJWT_SECRET_KEY: str = "secret-key"
         AUTHJWT_ACCESS_TOKEN_EXPIRES: int = 1
 
-    @AuthJWT.load_env
+    @AuthJWT.load_config
     def get_settings_one():
         return SettingsOne()
 
@@ -80,7 +80,7 @@ def test_verified_token(client,encoded_token,Authorize):
         AUTHJWT_REFRESH_TOKEN_EXPIRES: int = 1
         AUTHJWT_DECODE_LEEWAY: int = 2
 
-    @AuthJWT.load_env
+    @AuthJWT.load_config
     def get_settings_two():
         return SettingsTwo()
 
