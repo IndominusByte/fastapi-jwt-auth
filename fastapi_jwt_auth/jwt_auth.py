@@ -12,6 +12,7 @@ class AuthJWT:
     _refresh_token_expires = timedelta(days=30)
     _decode_leeway = 0
     _blacklist_enabled = None
+    _blacklist_token_checks = []
     _secret_key = None
     _algorithm = "HS256"
     _token_in_blacklist_callback = None
@@ -28,7 +29,8 @@ class AuthJWT:
                 self._token = authorization.split(' ')[1]
                 # verified token and check if token is revoked
                 raw_token = self._verified_token(encoded_token=self._token)
-                self._check_token_is_revoked(raw_token)
+                if raw_token['type'] in self._blacklist_token_checks:
+                    self._check_token_is_revoked(raw_token)
             else:
                 raise HTTPException(status_code=422,detail="Bad Authorization header. Expected value 'Bearer <JWT>'")
 
@@ -131,6 +133,7 @@ class AuthJWT:
             cls._refresh_token_expires = config.authjwt_refresh_token_expires
             cls._decode_leeway = config.authjwt_decode_leeway
             cls._blacklist_enabled = config.authjwt_blacklist_enabled
+            cls._blacklist_token_checks = config.authjwt_blacklist_token_checks
             cls._secret_key = config.authjwt_secret_key
             cls._algorithm = config.authjwt_algorithm
         except ValidationError:

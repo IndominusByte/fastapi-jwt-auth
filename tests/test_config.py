@@ -61,6 +61,7 @@ def test_blacklist_enabled_without_callback(client,Authorize):
     class SettingsTwo(BaseSettings):
         authjwt_secret_key: str = "secret-key"
         authjwt_blacklist_enabled: str = "true"
+        authjwt_blacklist_token_checks: list = ["access"]
 
     @AuthJWT.load_config
     def get_settings_two():
