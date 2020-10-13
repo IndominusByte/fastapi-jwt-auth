@@ -29,7 +29,7 @@ class AuthJWT:
                 self._token = authorization.split(' ')[1]
                 # verified token and check if token is revoked
                 raw_token = self._verified_token(encoded_token=self._token)
-                if raw_token['type'] in self._blacklist_token_checks:
+                if raw_token['user']['type'] in self._blacklist_token_checks:
                     self._check_token_is_revoked(raw_token)
             else:
                 raise HTTPException(status_code=422,detail="Bad Authorization header. Expected value 'Bearer <JWT>'")
@@ -76,26 +76,26 @@ class AuthJWT:
                 "AUTHJWT_SECRET_KEY must be set when using symmetric algorithm {}".format(self._algorithm)
             )
 
-        payload = {
+        reserved_claims = {
             "iat": self._get_int_from_datetime(datetime.now(timezone.utc)),
             "nbf": self._get_int_from_datetime(datetime.now(timezone.utc)),
             "jti": self._get_jwt_identifier(),
         }
 
-        user_claim = {
+        custom_claims = {
             "identity": identity,
             "type": type_token
         }
 
         # for access_token only fresh needed
         if type_token == 'access':
-            user_claim['fresh'] = fresh
+            custom_claims['fresh'] = fresh
 
         if exp_time:
-            payload['exp'] = exp_time
+            reserved_claims['exp'] = exp_time
 
         return jwt.encode(
-            {**payload, **user_claim},
+            {**reserved_claims, **{"user": custom_claims}},
             self._secret_key,
             algorithm=self._algorithm,
             headers=headers
@@ -273,7 +273,7 @@ class AuthJWT:
         if not self._token:
             raise HTTPException(status_code=401,detail="Missing Authorization Header")
 
-        if self.get_raw_jwt()['type'] != 'access':
+        if self.get_raw_jwt()['user']['type'] != 'access':
             raise HTTPException(status_code=422,detail="Only access tokens are allowed")
 
     def jwt_optional(self) -> None:
@@ -284,7 +284,7 @@ class AuthJWT:
 
         :return: None
         """
-        if self._token and self.get_raw_jwt()['type'] != 'access':
+        if self._token and self.get_raw_jwt()['user']['type'] != 'access':
             raise HTTPException(status_code=422,detail="Only access tokens are allowed")
 
     def jwt_refresh_token_required(self) -> None:
@@ -296,7 +296,7 @@ class AuthJWT:
         if not self._token:
             raise HTTPException(status_code=401,detail="Missing Authorization Header")
 
-        if self.get_raw_jwt()['type'] != 'refresh':
+        if self.get_raw_jwt()['user']['type'] != 'refresh':
             raise HTTPException(status_code=422,detail="Only refresh tokens are allowed")
 
     def fresh_jwt_required(self) -> None:
@@ -308,10 +308,10 @@ class AuthJWT:
         if not self._token:
             raise HTTPException(status_code=401,detail="Missing Authorization Header")
 
-        if self.get_raw_jwt()['type'] != 'access':
+        if self.get_raw_jwt()['user']['type'] != 'access':
             raise HTTPException(status_code=422,detail="Only access tokens are allowed")
 
-        if not self.get_raw_jwt()['fresh']:
+        if not self.get_raw_jwt()['user']['fresh']:
             raise HTTPException(status_code=401,detail="Fresh token required")
 
     def get_raw_jwt(self) -> Optional[Dict[str,Union[str,int,bool]]]:
@@ -341,7 +341,7 @@ class AuthJWT:
         :return: identity of JWT
         """
         if self._token:
-            return self._verified_token(encoded_token=self._token)['identity']
+            return self._verified_token(encoded_token=self._token)['user']['identity']
         return None
 
     def get_unverified_jwt_headers(self,encoded_token: Optional[bytes] = None) -> dict:
