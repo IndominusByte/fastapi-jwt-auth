@@ -4,6 +4,7 @@ from fastapi_jwt_auth import AuthJWT
 from fastapi import FastAPI, Depends
 from fastapi.testclient import TestClient
 from pydantic import BaseSettings, ValidationError
+from typing import Sequence
 from datetime import timedelta
 
 @pytest.fixture(scope='function')
@@ -19,19 +20,21 @@ def client():
 
 def test_default_config():
     reset_config()
+    assert AuthJWT._token is None
+    assert AuthJWT._secret_key is None
+    assert AuthJWT._algorithm == 'HS256'
+    assert AuthJWT._decode_leeway == 0
+    assert AuthJWT._encode_issuer is None
+    assert AuthJWT._decode_issuer is None
+    assert AuthJWT._blacklist_enabled is None
+    assert AuthJWT._blacklist_token_checks == []
+    assert AuthJWT._token_in_blacklist_callback is None
 
     assert AuthJWT._access_token_expires.__class__ == timedelta
     assert int(AuthJWT._access_token_expires.total_seconds()) == 900
 
     assert AuthJWT._refresh_token_expires.__class__ == timedelta
     assert int(AuthJWT._refresh_token_expires.total_seconds()) == 2592000
-
-    assert AuthJWT._blacklist_enabled is None
-    assert AuthJWT._secret_key is None
-    assert AuthJWT._algorithm == 'HS256'
-    assert AuthJWT._token_in_blacklist_callback is None
-    assert AuthJWT._token is None
-    assert AuthJWT._decode_leeway == 0
 
 def test_secret_key_not_exist(client,Authorize):
     reset_config()
@@ -73,43 +76,34 @@ def test_blacklist_enabled_without_callback(client,Authorize):
 def test_load_env_from_outside():
     # correct data
     class Settings(BaseSettings):
-        authjwt_access_token_expires: timedelta = timedelta(minutes=2)
-        authjwt_refresh_token_expires: timedelta = timedelta(days=5)
-        authjwt_decode_leeway: timedelta = timedelta(seconds=8)
-        authjwt_blacklist_enabled: str = "false"
         authjwt_secret_key: str = "testing"
         authjwt_algorithm: str = "HS256"
+        authjwt_decode_leeway: timedelta = timedelta(seconds=8)
+        authjwt_encode_issuer: str = "urn:foo"
+        authjwt_decode_issuer: str = "urn:foo"
+        authjwt_blacklist_token_checks: Sequence = ['access','refresh']
+        authjwt_blacklist_enabled: str = "false"
+        authjwt_access_token_expires: timedelta = timedelta(minutes=2)
+        authjwt_refresh_token_expires: timedelta = timedelta(days=5)
 
     @AuthJWT.load_config
     def get_valid_settings():
         return Settings()
 
-    assert AuthJWT._access_token_expires == timedelta(minutes=2)
-    assert AuthJWT._refresh_token_expires == timedelta(days=5)
-    assert AuthJWT._decode_leeway == timedelta(seconds=8)
-    assert AuthJWT._blacklist_enabled == "false"
     assert AuthJWT._secret_key == "testing"
     assert AuthJWT._algorithm == "HS256"
+    assert AuthJWT._decode_leeway == timedelta(seconds=8)
+    assert AuthJWT._encode_issuer == "urn:foo"
+    assert AuthJWT._decode_issuer == "urn:foo"
+    assert AuthJWT._blacklist_token_checks == ['access','refresh']
+    assert AuthJWT._blacklist_enabled == "false"
+    assert AuthJWT._access_token_expires == timedelta(minutes=2)
+    assert AuthJWT._refresh_token_expires == timedelta(days=5)
 
     with pytest.raises(TypeError,match=r"Config"):
         @AuthJWT.load_config
         def invalid_data():
             return "test"
-
-    with pytest.raises(ValidationError,match=r"AUTHJWT_ACCESS_TOKEN_EXPIRES"):
-        @AuthJWT.load_config
-        def get_invalid_access_token():
-            return [("authjwt_access_token_expires","lol")]
-
-    with pytest.raises(ValidationError,match=r"AUTHJWT_REFRESH_TOKEN_EXPIRES"):
-        @AuthJWT.load_config
-        def get_invalid_refresh_token():
-            return [("authjwt_refresh_token_expires","lol")]
-
-    with pytest.raises(ValidationError,match=r"AUTHJWT_BLACKLIST_ENABLED"):
-        @AuthJWT.load_config
-        def get_invalid_blacklist():
-            return [("authjwt_blacklist_enabled","test")]
 
     with pytest.raises(ValidationError,match=r"AUTHJWT_SECRET_KEY"):
         @AuthJWT.load_config
@@ -125,5 +119,35 @@ def test_load_env_from_outside():
         @AuthJWT.load_config
         def get_invalid_decode_leeway():
             return [("authjwt_decode_leeway","test")]
+
+    with pytest.raises(ValidationError,match=r"AUTHJWT_ENCODE_ISSUER"):
+        @AuthJWT.load_config
+        def get_invalid_encode_issuer():
+            return [("authjwt_encode_issuer",1)]
+
+    with pytest.raises(ValidationError,match=r"AUTHJWT_DECODE_ISSUER"):
+        @AuthJWT.load_config
+        def get_invalid_decode_issuer():
+            return [("authjwt_decode_issuer",1)]
+
+    with pytest.raises(ValidationError,match=r"AUTHJWT_BLACKLIST_ENABLED"):
+        @AuthJWT.load_config
+        def get_invalid_blacklist():
+            return [("authjwt_blacklist_enabled","test")]
+
+    with pytest.raises(ValidationError,match=r"AUTHJWT_BLACKLIST_TOKEN_CHECKS"):
+        @AuthJWT.load_config
+        def get_invalid_blacklist_token_checks():
+            return [("authjwt_blacklist_token_checks","string")]
+
+    with pytest.raises(ValidationError,match=r"AUTHJWT_ACCESS_TOKEN_EXPIRES"):
+        @AuthJWT.load_config
+        def get_invalid_access_token():
+            return [("authjwt_access_token_expires","lol")]
+
+    with pytest.raises(ValidationError,match=r"AUTHJWT_REFRESH_TOKEN_EXPIRES"):
+        @AuthJWT.load_config
+        def get_invalid_refresh_token():
+            return [("authjwt_refresh_token_expires","lol")]
 
     reset_config()

@@ -35,11 +35,9 @@ def client():
 def default_access_token():
     return {
         'jti': '123',
-        'user': {
-            'identity': 'test',
-            'type': 'access',
-            'fresh': True,
-        }
+        'identity': 'test',
+        'type': 'access',
+        'fresh': True,
     }
 
 @pytest.fixture(scope='function')
@@ -115,4 +113,4 @@ def test_get_jwt_jti(client,default_access_token,encoded_token,Authorize):
 def test_get_jwt_identity(client,default_access_token,encoded_token):
     response = client.get('/get_identity',headers={"Authorization":f"Bearer {encoded_token.decode('utf-8')}"})
     assert response.status_code == 200
-    assert response.json() == default_access_token['user']['identity']
+    assert response.json() == default_access_token['identity']
