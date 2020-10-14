@@ -26,6 +26,7 @@ def test_default_config():
     assert AuthJWT._decode_leeway == 0
     assert AuthJWT._encode_issuer is None
     assert AuthJWT._decode_issuer is None
+    assert AuthJWT._decode_audience is None
     assert AuthJWT._blacklist_enabled is None
     assert AuthJWT._blacklist_token_checks == []
     assert AuthJWT._token_in_blacklist_callback is None
@@ -81,6 +82,7 @@ def test_load_env_from_outside():
         authjwt_decode_leeway: timedelta = timedelta(seconds=8)
         authjwt_encode_issuer: str = "urn:foo"
         authjwt_decode_issuer: str = "urn:foo"
+        authjwt_decode_audience: str = 'urn:foo'
         authjwt_blacklist_token_checks: Sequence = ['access','refresh']
         authjwt_blacklist_enabled: str = "false"
         authjwt_access_token_expires: timedelta = timedelta(minutes=2)
@@ -95,6 +97,7 @@ def test_load_env_from_outside():
     assert AuthJWT._decode_leeway == timedelta(seconds=8)
     assert AuthJWT._encode_issuer == "urn:foo"
     assert AuthJWT._decode_issuer == "urn:foo"
+    assert AuthJWT._decode_audience == 'urn:foo'
     assert AuthJWT._blacklist_token_checks == ['access','refresh']
     assert AuthJWT._blacklist_enabled == "false"
     assert AuthJWT._access_token_expires == timedelta(minutes=2)
@@ -129,6 +132,11 @@ def test_load_env_from_outside():
         @AuthJWT.load_config
         def get_invalid_decode_issuer():
             return [("authjwt_decode_issuer",1)]
+
+    with pytest.raises(ValidationError,match=r"AUTHJWT_DECODE_AUDIENCE"):
+        @AuthJWT.load_config
+        def get_invalid_decode_audience():
+            return [("authjwt_decode_audience",1)]
 
     with pytest.raises(ValidationError,match=r"AUTHJWT_BLACKLIST_ENABLED"):
         @AuthJWT.load_config

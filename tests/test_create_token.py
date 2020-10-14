@@ -7,7 +7,7 @@ def test_create_access_token(Authorize):
     class Settings(BaseSettings):
         AUTHJWT_SECRET_KEY: str = "testing"
         AUTHJWT_ACCESS_TOKEN_EXPIRES: int = 1
-        AUTHJWT_REFRESH_TOKEN_EXPIRES: int = 2
+        AUTHJWT_REFRESH_TOKEN_EXPIRES: int = 3
 
     @AuthJWT.load_config
     def get_settings():
@@ -63,7 +63,7 @@ def test_create_dynamic_refresh_token_expires(Authorize):
     token = Authorize.create_refresh_token(identity=1,expires_time=timedelta(days=1))
     assert jwt.decode(token,"testing",algorithms="HS256")['exp'] == expires_time
 
-    expires_time = int(datetime.now(timezone.utc).timestamp()) + 2
+    expires_time = int(datetime.now(timezone.utc).timestamp()) + 3
     token = Authorize.create_refresh_token(identity=1,expires_time=True)
     assert jwt.decode(token,"testing",algorithms="HS256")['exp'] == expires_time
 
@@ -72,3 +72,10 @@ def test_create_dynamic_refresh_token_expires(Authorize):
 
     with pytest.raises(TypeError,match=r"expires_time"):
         Authorize.create_refresh_token(identity=1,expires_time="test")
+
+def test_create_token_invalid_type_data_audience(Authorize):
+    with pytest.raises(TypeError,match=r"audience"):
+        Authorize.create_access_token(identity=1,audience=1)
+
+    with pytest.raises(TypeError,match=r"audience"):
+        Authorize.create_refresh_token(identity=1,audience=1)

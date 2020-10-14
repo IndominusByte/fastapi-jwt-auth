@@ -70,29 +70,3 @@ def test_get_jwt_headers_from_request(client, Authorize):
 
     response = client.get('/get_headers_refresh',headers={"Authorization":f"Bearer {refresh_token.decode('utf-8')}"})
     assert response.json()['refresh'] == 'foo'
-
-def test_invalid_jwt_issuer(client,Authorize):
-    # No issuer claim expected or provided - OK
-    token = Authorize.create_access_token(identity='test')
-    response = client.get('/protected',headers={'Authorization':f"Bearer {token.decode('utf-8')}"})
-    assert response.status_code == 200
-    assert response.json() == {'hello':'world'}
-
-    AuthJWT._decode_issuer = "urn:foo"
-
-    # Issuer claim expected and not provided - Not OK
-    response = client.get('/protected',headers={'Authorization':f"Bearer {token.decode('utf-8')}"})
-    assert response.status_code == 422
-    assert response.json() == {'detail': 'Token is missing the "iss" claim'}
-
-    AuthJWT._decode_issuer = "urn:foo"
-    AuthJWT._encode_issuer = "urn:bar"
-
-    # Issuer claim still expected and wrong one provided - not OK
-    token = Authorize.create_access_token(identity='test')
-    response = client.get('/protected',headers={'Authorization':f"Bearer {token.decode('utf-8')}"})
-    assert response.status_code == 422
-    assert response.json() == {'detail': 'Invalid issuer'}
-
-    AuthJWT._decode_issuer = None
-    AuthJWT._encode_issuer = None

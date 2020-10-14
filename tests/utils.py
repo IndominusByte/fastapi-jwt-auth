@@ -7,6 +7,7 @@ def reset_config():
     AuthJWT._decode_leeway = 0
     AuthJWT._encode_issuer = None
     AuthJWT._decode_issuer = None
+    AuthJWT._decode_audience = None
     AuthJWT._blacklist_enabled = None
     AuthJWT._blacklist_token_checks = []
     AuthJWT._token_in_blacklist_callback = None

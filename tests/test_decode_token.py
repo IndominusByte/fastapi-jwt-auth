@@ -114,3 +114,63 @@ def test_get_jwt_identity(client,default_access_token,encoded_token):
     response = client.get('/get_identity',headers={"Authorization":f"Bearer {encoded_token.decode('utf-8')}"})
     assert response.status_code == 200
     assert response.json() == default_access_token['identity']
+
+def test_invalid_jwt_issuer(client,Authorize):
+    # No issuer claim expected or provided - OK
+    token = Authorize.create_access_token(identity='test')
+    response = client.get('/protected',headers={'Authorization':f"Bearer {token.decode('utf-8')}"})
+    assert response.status_code == 200
+    assert response.json() == {'hello':'world'}
+
+    AuthJWT._decode_issuer = "urn:foo"
+
+    # Issuer claim expected and not provided - Not OK
+    response = client.get('/protected',headers={'Authorization':f"Bearer {token.decode('utf-8')}"})
+    assert response.status_code == 422
+    assert response.json() == {'detail': 'Token is missing the "iss" claim'}
+
+    AuthJWT._decode_issuer = "urn:foo"
+    AuthJWT._encode_issuer = "urn:bar"
+
+    # Issuer claim still expected and wrong one provided - not OK
+    token = Authorize.create_access_token(identity='test')
+    response = client.get('/protected',headers={'Authorization':f"Bearer {token.decode('utf-8')}"})
+    assert response.status_code == 422
+    assert response.json() == {'detail': 'Invalid issuer'}
+
+    AuthJWT._decode_issuer = None
+    AuthJWT._encode_issuer = None
+
+@pytest.mark.parametrize("token_aud",['foo', ['bar'], ['foo', 'bar', 'baz']])
+def test_valid_aud(client,Authorize,token_aud):
+    AuthJWT._decode_audience = ['foo','bar']
+
+    access_token = Authorize.create_access_token(identity=1,audience=token_aud)
+    response = client.get('/protected',headers={'Authorization': f"Bearer {access_token.decode('utf-8')}"})
+    assert response.status_code == 200
+    assert response.json() == {'hello':'world'}
+
+    refresh_token = Authorize.create_refresh_token(identity=1,audience=token_aud)
+    response = client.get('/refresh_token',headers={'Authorization':f"Bearer {refresh_token.decode('utf-8')}"})
+    assert response.status_code == 200
+    assert response.json() == 1
+
+    if token_aud == ['foo', 'bar', 'baz']:
+        AuthJWT._decode_audience = None
+
+@pytest.mark.parametrize("token_aud",['bar', ['bar'], ['bar', 'baz']])
+def test_invalid_aud_and_missing_aud(client,Authorize,token_aud):
+    AuthJWT._decode_audience = 'foo'
+
+    access_token = Authorize.create_access_token(identity=1,audience=token_aud)
+    response = client.get('/protected',headers={'Authorization': f"Bearer {access_token.decode('utf-8')}"})
+    assert response.status_code == 422
+    assert response.json() == {'detail':'Invalid audience'}
+
+    refresh_token = Authorize.create_refresh_token(identity=1)
+    response = client.get('/refresh_token',headers={'Authorization':f"Bearer {refresh_token.decode('utf-8')}"})
+    assert response.status_code == 422
+    assert response.json() == {'detail': 'Token is missing the "aud" claim'}
+
+    if token_aud == ['bar','baz']:
+        AuthJWT._decode_audience = None

@@ -5,7 +5,15 @@ from pydantic import ValidationError
 from fastapi import Header, HTTPException
 from fastapi_jwt_auth.config import LoadSettings
 from datetime import datetime, timezone, timedelta
-from typing import Optional, Dict, Union, Callable, List
+from types import GeneratorType
+from typing import (
+    Optional,
+    Dict,
+    Union,
+    Callable,
+    List,
+    Sequence,
+)
 
 class AuthJWT:
     _token = None
@@ -14,6 +22,7 @@ class AuthJWT:
     _decode_leeway = 0
     _encode_issuer = None
     _decode_issuer = None
+    _decode_audience = None
     _blacklist_enabled = None
     _blacklist_token_checks = []
     _token_in_blacklist_callback = None
@@ -52,7 +61,8 @@ class AuthJWT:
         exp_time: Optional[int],
         fresh: Optional[bool] = False,
         headers: Optional[Dict] = None,
-        issuer: Optional[str] = None
+        issuer: Optional[str] = None,
+        audience: Optional[Union[str,Sequence[str]]] = None
     ) -> bytes:
         """
         This function create token for access_token and refresh_token, when type_token
@@ -64,6 +74,7 @@ class AuthJWT:
         :param fresh: Optional when token is access_token this param required
         :param headers: valid dict for specifying additional headers in JWT header section
         :param issuer: expected issuer in the JWT
+        :param audience: expected audience in the JWT
 
         :return: Encoded token
         """
@@ -76,6 +87,15 @@ class AuthJWT:
                 "AUTHJWT_SECRET_KEY must be set when using symmetric algorithm {}".format(self._algorithm)
             )
 
+        # Validation type data
+        if not isinstance(identity, (str,int)):
+            raise TypeError("identity must be a string or integer")
+        if not isinstance(fresh, (bool)):
+            raise TypeError("fresh must be a boolean")
+        if audience and not isinstance(audience, (str, list, tuple, set, frozenset, GeneratorType)):
+            raise TypeError("audience must be a string or sequence")
+
+        # Data section
         reserved_claims = {
             "iat": self._get_int_from_datetime(datetime.now(timezone.utc)),
             "nbf": self._get_int_from_datetime(datetime.now(timezone.utc)),
@@ -95,6 +115,8 @@ class AuthJWT:
             reserved_claims['exp'] = exp_time
         if issuer:
             reserved_claims['iss'] = issuer
+        if audience:
+            reserved_claims['aud'] = audience
 
         return jwt.encode(
             {**reserved_claims, **custom_claims},
@@ -134,6 +156,7 @@ class AuthJWT:
                 encoded_token,
                 self._secret_key,
                 issuer=issuer,
+                audience=self._decode_audience,
                 leeway=self._decode_leeway,
                 algorithms=self._algorithm
             )
@@ -150,6 +173,7 @@ class AuthJWT:
             cls._decode_leeway = config.authjwt_decode_leeway
             cls._encode_issuer = config.authjwt_encode_issuer
             cls._decode_issuer = config.authjwt_decode_issuer
+            cls._decode_audience = config.authjwt_decode_audience
             cls._blacklist_enabled = config.authjwt_blacklist_enabled
             cls._blacklist_token_checks = config.authjwt_blacklist_token_checks
             cls._access_token_expires = config.authjwt_access_token_expires
@@ -202,12 +226,47 @@ class AuthJWT:
         if self._token_in_blacklist_callback.__func__(raw_token):
             raise HTTPException(status_code=401,detail="Token has been revoked")
 
+    def _get_expired_time(
+        self,
+        type_token: str,
+        expires_time: Optional[Union[timedelta,int,bool]] = None
+    ) -> Union[None,int]:
+        """
+        Dynamic token expired if expires_time is False exp claim not created
+
+        :param type_token: for indicate token is access_token or refresh_token
+        :param expires_time: duration expired jwt
+
+        :return: duration exp claim jwt
+        """
+        if expires_time and not isinstance(expires_time, (timedelta,int,bool)):
+            raise TypeError("expires_time must be between timedelta, int, bool")
+
+        if expires_time is not False:
+            if type_token == 'access':
+                expires_time = expires_time or self._access_token_expires
+            if type_token == 'refresh':
+                expires_time = expires_time or self._refresh_token_expires
+
+            if isinstance(expires_time, bool):
+                if type_token == 'access':
+                    expires_time = self._access_token_expires
+                if type_token == 'refresh':
+                    expires_time = self._refresh_token_expires
+            if isinstance(expires_time, timedelta):
+                expires_time = int(expires_time.total_seconds())
+
+            return self._get_int_from_datetime(datetime.now(timezone.utc)) + expires_time
+        else:
+            return None
+
     def create_access_token(
         self,
         identity: Union[str,int],
         fresh: Optional[bool] = False,
         headers: Optional[Dict] = None,
-        expires_time: Optional[Union[timedelta,int,bool]] = None
+        expires_time: Optional[Union[timedelta,int,bool]] = None,
+        audience: Optional[Union[str,Sequence[str]]] = None
     ) -> bytes:
         """
         Create a access token with 15 minutes for expired time (default),
@@ -215,33 +274,14 @@ class AuthJWT:
 
         :return: hash token
         """
-        if not isinstance(identity, (str,int)):
-            raise TypeError("identity must be a string or integer")
-        if not isinstance(fresh, (bool)):
-            raise TypeError("fresh must be a boolean")
-        if expires_time and not isinstance(expires_time, (timedelta,int,bool)):
-            raise TypeError("expires_time must be between timedelta, int, bool")
-
-        # Dynamic token expired
-        # if expires_time is False exp claim not created
-        if expires_time is not False:
-            expires_time = expires_time or self._access_token_expires
-
-            if isinstance(expires_time, bool):
-                expires_time = self._access_token_expires
-            if isinstance(expires_time, timedelta):
-                expires_time = int(expires_time.total_seconds())
-
-            expired = self._get_int_from_datetime(datetime.now(timezone.utc)) + expires_time
-        else:
-            expired = None
 
         return self._create_token(
             identity=identity,
             type_token="access",
-            exp_time=expired,
+            exp_time=self._get_expired_time("access",expires_time),
             fresh=fresh,
             headers=headers,
+            audience=audience,
             issuer=self._encode_issuer
         )
 
@@ -249,7 +289,8 @@ class AuthJWT:
         self,
         identity: Union[str,int],
         headers: Optional[Dict] = None,
-        expires_time: Optional[Union[timedelta,int,bool]] = None
+        expires_time: Optional[Union[timedelta,int,bool]] = None,
+        audience: Optional[Union[str,Sequence[str]]] = None
     ) -> bytes:
         """
         Create a refresh token with 30 days for expired time (default),
@@ -257,30 +298,13 @@ class AuthJWT:
 
         :return: hash token
         """
-        if not isinstance(identity, (str,int)):
-            raise TypeError("identity must be a string or integer")
-        if expires_time and not isinstance(expires_time, (timedelta,int,bool)):
-            raise TypeError("expires_time must be between timedelta, int, bool")
-
-        # Dynamic token expired
-        # if expires_time is False exp claim not created
-        if expires_time is not False:
-            expires_time = expires_time or self._refresh_token_expires
-
-            if isinstance(expires_time, bool):
-                expires_time = self._refresh_token_expires
-            if isinstance(expires_time, timedelta):
-                expires_time = int(expires_time.total_seconds())
-
-            expired = self._get_int_from_datetime(datetime.now(timezone.utc)) + expires_time
-        else:
-            expired = None
 
         return self._create_token(
             identity=identity,
             type_token="refresh",
-            exp_time=expired,
-            headers=headers
+            exp_time=self._get_expired_time("refresh",expires_time),
+            headers=headers,
+            audience=audience
         )
 
     def jwt_required(self) -> None:

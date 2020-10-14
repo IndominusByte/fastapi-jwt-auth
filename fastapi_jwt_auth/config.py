@@ -9,6 +9,7 @@ class LoadSettings(BaseModel):
     authjwt_decode_leeway: Optional[Union[int,timedelta]] = 0
     authjwt_encode_issuer: Optional[str] = None
     authjwt_decode_issuer: Optional[str] = None
+    authjwt_decode_audience: Optional[Union[str,Sequence[str]]] = None
     authjwt_blacklist_enabled: Optional[str] = None
     authjwt_blacklist_token_checks: Optional[Sequence[str]] = []
     authjwt_access_token_expires: Optional[Union[int,timedelta]] = timedelta(minutes=15)
@@ -21,6 +22,7 @@ class LoadSettings(BaseModel):
         _decode_leeway = values.get("authjwt_decode_leeway")
         _encode_issuer = values.get("authjwt_encode_issuer")
         _decode_issuer = values.get("authjwt_decode_issuer")
+        _decode_audience = values.get("authjwt_decode_audience")
         _blacklist_enabled = values.get("authjwt_blacklist_enabled")
         _blacklist_token_checks = values.get("authjwt_blacklist_token_checks")
         _access_token_expires = values.get("authjwt_access_token_expires")
@@ -40,6 +42,12 @@ class LoadSettings(BaseModel):
 
         if _decode_issuer and not isinstance(_decode_issuer, str):
             raise TypeError("The 'AUTHJWT_DECODE_ISSUER' must be a string")
+
+        if (
+            _decode_audience and
+            not isinstance(_decode_audience, (str, list, tuple, set, frozenset, GeneratorType))
+        ):
+            raise TypeError("The 'AUTHJWT_DECODE_AUDIENCE' must be a string or sequence")
 
         if _blacklist_enabled and _blacklist_enabled not in ['true','false']:
             raise TypeError("The 'AUTHJWT_BLACKLIST_ENABLED' must be between 'true' or 'false'")
