@@ -19,6 +19,7 @@ class AuthJWT:
     _token = None
     _secret_key = None
     _algorithm = "HS256"
+    _decode_algorithms = None
     _decode_leeway = 0
     _encode_issuer = None
     _decode_issuer = None
@@ -151,6 +152,8 @@ class AuthJWT:
                 "AUTHJWT_SECRET_KEY must be set when using symmetric algorithm {}".format(self._algorithm)
             )
 
+        algorithms = self._decode_algorithms or [self._algorithm]
+
         try:
             return jwt.decode(
                 encoded_token,
@@ -158,7 +161,7 @@ class AuthJWT:
                 issuer=issuer,
                 audience=self._decode_audience,
                 leeway=self._decode_leeway,
-                algorithms=self._algorithm
+                algorithms=algorithms
             )
         except Exception as err:
             raise HTTPException(status_code=422,detail=str(err))
@@ -170,6 +173,7 @@ class AuthJWT:
 
             cls._secret_key = config.authjwt_secret_key
             cls._algorithm = config.authjwt_algorithm
+            cls._decode_algorithms = config.authjwt_decode_algorithms
             cls._decode_leeway = config.authjwt_decode_leeway
             cls._encode_issuer = config.authjwt_encode_issuer
             cls._decode_issuer = config.authjwt_decode_issuer

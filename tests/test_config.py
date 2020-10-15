@@ -23,6 +23,7 @@ def test_default_config():
     assert AuthJWT._token is None
     assert AuthJWT._secret_key is None
     assert AuthJWT._algorithm == 'HS256'
+    assert AuthJWT._decode_algorithms is None
     assert AuthJWT._decode_leeway == 0
     assert AuthJWT._encode_issuer is None
     assert AuthJWT._decode_issuer is None
@@ -79,6 +80,7 @@ def test_load_env_from_outside():
     class Settings(BaseSettings):
         authjwt_secret_key: str = "testing"
         authjwt_algorithm: str = "HS256"
+        authjwt_decode_algorithms: list = ['HS256']
         authjwt_decode_leeway: timedelta = timedelta(seconds=8)
         authjwt_encode_issuer: str = "urn:foo"
         authjwt_decode_issuer: str = "urn:foo"
@@ -94,6 +96,7 @@ def test_load_env_from_outside():
 
     assert AuthJWT._secret_key == "testing"
     assert AuthJWT._algorithm == "HS256"
+    assert AuthJWT._decode_algorithms == ['HS256']
     assert AuthJWT._decode_leeway == timedelta(seconds=8)
     assert AuthJWT._encode_issuer == "urn:foo"
     assert AuthJWT._decode_issuer == "urn:foo"
@@ -117,6 +120,11 @@ def test_load_env_from_outside():
         @AuthJWT.load_config
         def get_invalid_algorithm():
             return [("authjwt_algorithm",123)]
+
+    with pytest.raises(ValidationError,match=r"AUTHJWT_DECODE_ALGORITHMS"):
+        @AuthJWT.load_config
+        def get_invalid_decode_algorithms():
+            return [("authjwt_decode_algorithms","test")]
 
     with pytest.raises(ValidationError,match=r"AUTHJWT_DECODE_LEEWAY"):
         @AuthJWT.load_config

@@ -1,11 +1,12 @@
 from pydantic import BaseModel, root_validator, validator
-from typing import Optional, Union, Sequence
+from typing import Optional, Union, Sequence, List
 from types import GeneratorType
 from datetime import timedelta
 
 class LoadSettings(BaseModel):
     authjwt_secret_key: Optional[str] = None
     authjwt_algorithm: Optional[str] = "HS256"
+    authjwt_decode_algorithms: Optional[List[str]] = None
     authjwt_decode_leeway: Optional[Union[int,timedelta]] = 0
     authjwt_encode_issuer: Optional[str] = None
     authjwt_decode_issuer: Optional[str] = None
@@ -19,6 +20,7 @@ class LoadSettings(BaseModel):
     def validate_blacklist_enabled(cls, values):
         _secret_key = values.get("authjwt_secret_key")
         _algorithm = values.get("authjwt_algorithm")
+        _decode_algorithms = values.get("authjwt_decode_algorithms")
         _decode_leeway = values.get("authjwt_decode_leeway")
         _encode_issuer = values.get("authjwt_encode_issuer")
         _decode_issuer = values.get("authjwt_decode_issuer")
@@ -33,6 +35,9 @@ class LoadSettings(BaseModel):
 
         if _algorithm and not isinstance(_algorithm, str):
             raise TypeError("The 'AUTHJWT_ALGORITHM' must be a string")
+
+        if _decode_algorithms and not isinstance(_decode_algorithms, list):
+            raise TypeError("The 'AUTHJWT_DECODE_ALGORITHMS' must be a list")
 
         if _decode_leeway and not isinstance(_decode_leeway, (timedelta, int)):
             raise TypeError("The 'AUTHJWT_DECODE_LEEWAY' must be a timedelta or integer")

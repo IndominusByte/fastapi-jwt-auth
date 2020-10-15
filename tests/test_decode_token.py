@@ -174,3 +174,19 @@ def test_invalid_aud_and_missing_aud(client,Authorize,token_aud):
 
     if token_aud == ['bar','baz']:
         AuthJWT._decode_audience = None
+
+def test_invalid_decode_algorithms(client,Authorize):
+    class SettingsAlgorithms(BaseSettings):
+        authjwt_secret_key: str = "secret"
+        authjwt_decode_algorithms: list = ['HS384','RS256']
+
+    @AuthJWT.load_config
+    def get_settings_algorithms():
+        return SettingsAlgorithms()
+
+    token = Authorize.create_access_token(identity=1)
+    response = client.get('/protected',headers={'Authorization':f"Bearer {token.decode('utf-8')}"})
+    assert response.status_code == 422
+    assert response.json() == {'detail': 'The specified alg value is not allowed'}
+
+    AuthJWT._decode_algorithms = None
