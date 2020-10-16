@@ -1,4 +1,4 @@
-import pytest
+import pytest, os
 from .utils import reset_config
 from fastapi_jwt_auth import AuthJWT
 from fastapi import FastAPI, Depends
@@ -84,8 +84,6 @@ def test_blacklist_enabled_without_callback(client):
         response = client.get('/protected',headers={"Authorization": f"Bearer {token.decode('utf-8')}"})
 
 def test_load_env_from_outside():
-    import os
-
     DIR = os.path.abspath(os.path.dirname(__file__))
     private_txt = os.path.join(DIR,'private_key.txt')
     public_txt = os.path.join(DIR,'public_key.txt')
