@@ -18,6 +18,9 @@ setuptools.setup(
         'fastapi>=0.61.0',
         'PyJWT>=1.7.1'
     ],
+    extras_require={
+        'asymmetric': ["cryptography>=2.6,<4.0.0"]
+    },
     classifiers=[
         "Environment :: Web Environment",
         "Intended Audience :: Developers",

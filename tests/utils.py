@@ -3,6 +3,8 @@ from datetime import timedelta
 
 def reset_config():
     AuthJWT._secret_key = None
+    AuthJWT._public_key = None
+    AuthJWT._private_key = None
     AuthJWT._algorithm = "HS256"
     AuthJWT._decode_algorithms = None
     AuthJWT._decode_leeway = 0

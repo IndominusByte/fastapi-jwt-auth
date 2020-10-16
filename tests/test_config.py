@@ -22,6 +22,8 @@ def test_default_config():
     reset_config()
     assert AuthJWT._token is None
     assert AuthJWT._secret_key is None
+    assert AuthJWT._public_key is None
+    assert AuthJWT._private_key is None
     assert AuthJWT._algorithm == 'HS256'
     assert AuthJWT._decode_algorithms is None
     assert AuthJWT._decode_leeway == 0
@@ -44,10 +46,14 @@ def test_secret_key_not_exist(client,Authorize):
     with pytest.raises(RuntimeError,match=r"AUTHJWT_SECRET_KEY"):
         Authorize.create_access_token(identity='test')
 
-    with pytest.raises(RuntimeError,match=r"AUTHJWT_SECRET_KEY"):
-        client.get('/protected',headers={"Authorization":"Bearer test"})
+    Authorize._secret_key = "secret"
+    token = Authorize.create_access_token(identity=1)
+    Authorize._secret_key = None
 
-def test_blacklist_enabled_without_callback(client,Authorize):
+    with pytest.raises(RuntimeError,match=r"AUTHJWT_SECRET_KEY"):
+        client.get('/protected',headers={"Authorization":f"Bearer {token.decode('utf-8')}"})
+
+def test_blacklist_enabled_without_callback(client):
     # set authjwt_secret_key for create token
     class SettingsOne(BaseSettings):
         authjwt_secret_key: str = "secret-key"
@@ -57,6 +63,8 @@ def test_blacklist_enabled_without_callback(client,Authorize):
     @AuthJWT.load_config
     def get_settings_one():
         return SettingsOne()
+
+    Authorize = AuthJWT(authorization=None)
 
     token = Authorize.create_access_token(identity='test')
 
@@ -76,9 +84,23 @@ def test_blacklist_enabled_without_callback(client,Authorize):
         response = client.get('/protected',headers={"Authorization": f"Bearer {token.decode('utf-8')}"})
 
 def test_load_env_from_outside():
+    import os
+
+    DIR = os.path.abspath(os.path.dirname(__file__))
+    private_txt = os.path.join(DIR,'private_key.txt')
+    public_txt = os.path.join(DIR,'public_key.txt')
+
+    with open(private_txt) as f:
+        PRIVATE_KEY = f.read().strip()
+
+    with open(public_txt) as f:
+        PUBLIC_KEY = f.read().strip()
+
     # correct data
     class Settings(BaseSettings):
         authjwt_secret_key: str = "testing"
+        authjwt_public_key: str = PUBLIC_KEY
+        authjwt_private_key: str = PRIVATE_KEY
         authjwt_algorithm: str = "HS256"
         authjwt_decode_algorithms: list = ['HS256']
         authjwt_decode_leeway: timedelta = timedelta(seconds=8)
@@ -95,6 +117,8 @@ def test_load_env_from_outside():
         return Settings()
 
     assert AuthJWT._secret_key == "testing"
+    assert AuthJWT._public_key == PUBLIC_KEY
+    assert AuthJWT._private_key == PRIVATE_KEY
     assert AuthJWT._algorithm == "HS256"
     assert AuthJWT._decode_algorithms == ['HS256']
     assert AuthJWT._decode_leeway == timedelta(seconds=8)
@@ -115,6 +139,16 @@ def test_load_env_from_outside():
         @AuthJWT.load_config
         def get_invalid_secret_key():
             return [("authjwt_secret_key",123)]
+
+    with pytest.raises(ValidationError,match=r"AUTHJWT_PUBLIC_KEY"):
+        @AuthJWT.load_config
+        def get_invalid_public_key():
+            return [("authjwt_public_key",123)]
+
+    with pytest.raises(ValidationError,match=r"AUTHJWT_PRIVATE_KEY"):
+        @AuthJWT.load_config
+        def get_invalid_private_key():
+            return [("authjwt_private_key",123)]
 
     with pytest.raises(ValidationError,match=r"AUTHJWT_ALGORITHM"):
         @AuthJWT.load_config

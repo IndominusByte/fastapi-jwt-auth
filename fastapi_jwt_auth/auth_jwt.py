@@ -5,6 +5,7 @@ from pydantic import ValidationError
 from fastapi import Header, HTTPException
 from fastapi_jwt_auth.config import LoadSettings
 from datetime import datetime, timezone, timedelta
+from jwt.algorithms import requires_cryptography, has_crypto
 from types import GeneratorType
 from typing import (
     Optional,
@@ -18,6 +19,8 @@ from typing import (
 class AuthJWT:
     _token = None
     _secret_key = None
+    _public_key = None
+    _private_key = None
     _algorithm = "HS256"
     _decode_algorithms = None
     _decode_leeway = 0
@@ -55,6 +58,50 @@ class AuthJWT:
             raise TypeError('a datetime is required')
         return int(value.timestamp())
 
+    def _get_secret_key(self, algorithm: str, process: str) -> str:
+        """
+        Get key with a different algorithm
+
+        :param algorithm: algorithm for decode and encode token
+        :param process: for indicating get key for encode or decode token
+
+        :return: plain text or RSA depends on algorithm
+        """
+        symmetric_algorithms = {"HS256","HS384","HS512"}
+        asymmetric_algorithms = requires_cryptography
+
+        if algorithm not in symmetric_algorithms and algorithm not in asymmetric_algorithms:
+            raise ValueError("Algorithm {} could not be found".format(algorithm))
+
+        if algorithm in symmetric_algorithms:
+            if not self._secret_key:
+                raise RuntimeError(
+                    "AUTHJWT_SECRET_KEY must be set when using symmetric algorithm {}".format(algorithm)
+                )
+
+            return self._secret_key
+
+        if algorithm in asymmetric_algorithms and not has_crypto:
+            raise RuntimeError(
+                "Missing dependencies for using asymmetric algorithms. run 'pip install fastapi-jwt-auth[asymmetric]'"
+            )
+
+        if process == "encode":
+            if not self._private_key:
+                raise RuntimeError(
+                    "AUTHJWT_PRIVATE_KEY must be set when using asymmetric algorithm {}".format(algorithm)
+                )
+
+            return self._private_key
+
+        if process == "decode":
+            if not self._public_key:
+                raise RuntimeError(
+                    "AUTHJWT_PUBLIC_KEY must be set when using asymmetric algorithm {}".format(algorithm)
+                )
+
+            return self._public_key
+
     def _create_token(
         self,
         identity: Union[str,int],
@@ -82,11 +129,12 @@ class AuthJWT:
         if type_token not in ['access','refresh']:
             raise TypeError("Type token must be between access or refresh")
 
-        # raise an error if secret key doesn't exist
-        if not self._secret_key:
-            raise RuntimeError(
-                "AUTHJWT_SECRET_KEY must be set when using symmetric algorithm {}".format(self._algorithm)
-            )
+        algorithm = self._algorithm
+
+        try:
+            secret_key = self._get_secret_key(algorithm,"encode")
+        except Exception:
+            raise
 
         # Validation type data
         if not isinstance(identity, (str,int)):
@@ -121,8 +169,8 @@ class AuthJWT:
 
         return jwt.encode(
             {**reserved_claims, **custom_claims},
-            self._secret_key,
-            algorithm=self._algorithm,
+            secret_key,
+            algorithm=algorithm,
             headers=headers
         )
 
@@ -146,18 +194,22 @@ class AuthJWT:
         :param issuer: expected issuer in the JWT
         :return: raw data from the hash token in the form of a dictionary
         """
-        # raise an error if secret key doesn't exist
-        if not self._secret_key:
-            raise RuntimeError(
-                "AUTHJWT_SECRET_KEY must be set when using symmetric algorithm {}".format(self._algorithm)
-            )
-
         algorithms = self._decode_algorithms or [self._algorithm]
+
+        try:
+            unverified_headers = self.get_unverified_jwt_headers(encoded_token)
+        except Exception as err:
+            raise HTTPException(status_code=422,detail=str(err))
+
+        try:
+            secret_key = self._get_secret_key(unverified_headers['alg'],"decode")
+        except Exception:
+            raise
 
         try:
             return jwt.decode(
                 encoded_token,
-                self._secret_key,
+                secret_key,
                 issuer=issuer,
                 audience=self._decode_audience,
                 leeway=self._decode_leeway,
@@ -172,6 +224,8 @@ class AuthJWT:
             config = LoadSettings(**{key.lower():value for key,value in settings()})
 
             cls._secret_key = config.authjwt_secret_key
+            cls._public_key = config.authjwt_public_key
+            cls._private_key = config.authjwt_private_key
             cls._algorithm = config.authjwt_algorithm
             cls._decode_algorithms = config.authjwt_decode_algorithms
             cls._decode_leeway = config.authjwt_decode_leeway

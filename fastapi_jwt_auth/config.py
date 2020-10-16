@@ -5,6 +5,8 @@ from datetime import timedelta
 
 class LoadSettings(BaseModel):
     authjwt_secret_key: Optional[str] = None
+    authjwt_public_key: Optional[str] = None
+    authjwt_private_key: Optional[str] = None
     authjwt_algorithm: Optional[str] = "HS256"
     authjwt_decode_algorithms: Optional[List[str]] = None
     authjwt_decode_leeway: Optional[Union[int,timedelta]] = 0
@@ -19,6 +21,8 @@ class LoadSettings(BaseModel):
     @root_validator(pre=True)
     def validate_blacklist_enabled(cls, values):
         _secret_key = values.get("authjwt_secret_key")
+        _public_key = values.get("authjwt_public_key")
+        _private_key = values.get("authjwt_private_key")
         _algorithm = values.get("authjwt_algorithm")
         _decode_algorithms = values.get("authjwt_decode_algorithms")
         _decode_leeway = values.get("authjwt_decode_leeway")
@@ -32,6 +36,12 @@ class LoadSettings(BaseModel):
 
         if _secret_key and not isinstance(_secret_key, str):
             raise TypeError("The 'AUTHJWT_SECRET_KEY' must be a string")
+
+        if _public_key and not isinstance(_public_key, str):
+            raise TypeError("The 'AUTHJWT_PUBLIC_KEY' must be a string")
+
+        if _private_key and not isinstance(_private_key, str):
+            raise TypeError("The 'AUTHJWT_PRIVATE_KEY' must be a string")
 
         if _algorithm and not isinstance(_algorithm, str):
             raise TypeError("The 'AUTHJWT_ALGORITHM' must be a string")
