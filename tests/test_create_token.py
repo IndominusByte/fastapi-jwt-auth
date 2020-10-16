@@ -79,3 +79,17 @@ def test_create_token_invalid_type_data_audience(Authorize):
 
     with pytest.raises(TypeError,match=r"audience"):
         Authorize.create_refresh_token(identity=1,audience=1)
+
+def test_create_token_invalid_algorithm(Authorize):
+    with pytest.raises(ValueError,match=r"Algorithm"):
+        Authorize.create_access_token(identity=1,algorithm="test")
+
+    with pytest.raises(ValueError,match=r"Algorithm"):
+        Authorize.create_refresh_token(identity=1,algorithm="test")
+
+def test_create_token_invalid_type_data_algorithm(Authorize):
+    with pytest.raises(TypeError,match=r"algorithm"):
+        Authorize.create_access_token(identity=1,algorithm=1)
+
+    with pytest.raises(TypeError,match=r"algorithm"):
+        Authorize.create_refresh_token(identity=1,algorithm=1)

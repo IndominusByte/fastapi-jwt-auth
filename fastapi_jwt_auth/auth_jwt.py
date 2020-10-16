@@ -108,6 +108,7 @@ class AuthJWT:
         type_token: str,
         exp_time: Optional[int],
         fresh: Optional[bool] = False,
+        algorithm: Optional[str] = None,
         headers: Optional[Dict] = None,
         issuer: Optional[str] = None,
         audience: Optional[Union[str,Sequence[str]]] = None
@@ -120,6 +121,7 @@ class AuthJWT:
         :param type_token: for indicate token is access_token or refresh_token
         :param exp_time: Set the duration of the JWT
         :param fresh: Optional when token is access_token this param required
+        :param algorithm: algorithm allowed to encode the token
         :param headers: valid dict for specifying additional headers in JWT header section
         :param issuer: expected issuer in the JWT
         :param audience: expected audience in the JWT
@@ -129,13 +131,6 @@ class AuthJWT:
         if type_token not in ['access','refresh']:
             raise TypeError("Type token must be between access or refresh")
 
-        algorithm = self._algorithm
-
-        try:
-            secret_key = self._get_secret_key(algorithm,"encode")
-        except Exception:
-            raise
-
         # Validation type data
         if not isinstance(identity, (str,int)):
             raise TypeError("identity must be a string or integer")
@@ -143,6 +138,8 @@ class AuthJWT:
             raise TypeError("fresh must be a boolean")
         if audience and not isinstance(audience, (str, list, tuple, set, frozenset, GeneratorType)):
             raise TypeError("audience must be a string or sequence")
+        if algorithm and not isinstance(algorithm, str):
+            raise TypeError("algorithm must be a string")
 
         # Data section
         reserved_claims = {
@@ -166,6 +163,13 @@ class AuthJWT:
             reserved_claims['iss'] = issuer
         if audience:
             reserved_claims['aud'] = audience
+
+        algorithm = algorithm or self._algorithm
+
+        try:
+            secret_key = self._get_secret_key(algorithm,"encode")
+        except Exception:
+            raise
 
         return jwt.encode(
             {**reserved_claims, **custom_claims},
@@ -322,6 +326,7 @@ class AuthJWT:
         self,
         identity: Union[str,int],
         fresh: Optional[bool] = False,
+        algorithm: Optional[str] = None,
         headers: Optional[Dict] = None,
         expires_time: Optional[Union[timedelta,int,bool]] = None,
         audience: Optional[Union[str,Sequence[str]]] = None
@@ -338,6 +343,7 @@ class AuthJWT:
             type_token="access",
             exp_time=self._get_expired_time("access",expires_time),
             fresh=fresh,
+            algorithm=algorithm,
             headers=headers,
             audience=audience,
             issuer=self._encode_issuer
@@ -346,6 +352,7 @@ class AuthJWT:
     def create_refresh_token(
         self,
         identity: Union[str,int],
+        algorithm: Optional[str] = None,
         headers: Optional[Dict] = None,
         expires_time: Optional[Union[timedelta,int,bool]] = None,
         audience: Optional[Union[str,Sequence[str]]] = None
@@ -361,6 +368,7 @@ class AuthJWT:
             identity=identity,
             type_token="refresh",
             exp_time=self._get_expired_time("refresh",expires_time),
+            algorithm=algorithm,
             headers=headers,
             audience=audience
         )
