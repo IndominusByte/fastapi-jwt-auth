@@ -10,7 +10,6 @@ blacklist = set()
 class Settings(BaseSettings):
     authjwt_secret_key: str = 'secret-key'
     authjwt_blacklist_enabled: str = 'true'
-    authjwt_blacklist_token_checks: list = ['access','refresh']
 
 @AuthJWT.load_config
 def get_settings():

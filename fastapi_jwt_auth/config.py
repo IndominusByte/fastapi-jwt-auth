@@ -14,7 +14,7 @@ class LoadSettings(BaseModel):
     authjwt_decode_issuer: Optional[str] = None
     authjwt_decode_audience: Optional[Union[str,Sequence[str]]] = None
     authjwt_blacklist_enabled: Optional[str] = None
-    authjwt_blacklist_token_checks: Optional[Sequence[str]] = []
+    authjwt_blacklist_token_checks: Optional[Sequence[str]] = {'access','refresh'}
     authjwt_access_token_expires: Optional[Union[int,timedelta]] = timedelta(minutes=15)
     authjwt_refresh_token_expires: Optional[Union[int,timedelta]] = timedelta(days=30)
 
