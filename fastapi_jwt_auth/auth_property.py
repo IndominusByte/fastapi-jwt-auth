@@ -49,8 +49,8 @@ class AuthProperty:
         This decorator sets the callback function that will be called when
         a protected endpoint is accessed and will check if the JWT has been
         been revoked. By default, this callback is not used.
-        *HINT*: The callback must be a function that takes *args and **kwargs argument,
-        args for object AuthJWT and this is not used, kwargs['decrypted_token'] is decode
+        *HINT*: The callback must be a function that takes decrypted_token argument,
+        args for object AuthJWT and this is not used, decrypted_token is decode
         JWT (python dictionary) and returns *`True`* if the token has been blacklisted,
         or *`False`* otherwise.
         """
