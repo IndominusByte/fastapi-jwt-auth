@@ -51,10 +51,12 @@ def test_token_expired_false(Authorize):
         return TokenFalse()
 
     access_token = Authorize.create_access_token(identity=1)
-    assert 'exp' not in jwt.decode(access_token,"testing",algorithms="HS256")
+    decode_token = jwt.decode(access_token,"testing",algorithms="HS256")
+    assert 'exp' not in decode_token
 
     refresh_token = Authorize.create_refresh_token(identity=1)
-    assert 'exp' not in jwt.decode(refresh_token,"testing",algorithms="HS256")
+    decode_token = jwt.decode(refresh_token,"testing",algorithms="HS256")
+    assert 'exp' not in decode_token
 
 def test_secret_key_not_exist(client,Authorize):
     reset_config()
