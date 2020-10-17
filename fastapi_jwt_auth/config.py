@@ -1,22 +1,29 @@
-from pydantic import BaseModel, root_validator, validator
+from datetime import timedelta
 from typing import Optional, Union, Sequence, List
 from types import GeneratorType
-from datetime import timedelta
+from pydantic import (
+    BaseModel,
+    root_validator,
+    validator,
+    StrictBool,
+    StrictInt,
+    StrictStr
+)
 
 class LoadSettings(BaseModel):
-    authjwt_secret_key: Optional[str] = None
-    authjwt_public_key: Optional[str] = None
-    authjwt_private_key: Optional[str] = None
-    authjwt_algorithm: Optional[str] = "HS256"
-    authjwt_decode_algorithms: Optional[List[str]] = None
-    authjwt_decode_leeway: Optional[Union[int,timedelta]] = 0
-    authjwt_encode_issuer: Optional[str] = None
-    authjwt_decode_issuer: Optional[str] = None
-    authjwt_decode_audience: Optional[Union[str,Sequence[str]]] = None
-    authjwt_blacklist_enabled: Optional[str] = None
-    authjwt_blacklist_token_checks: Optional[Sequence[str]] = {'access','refresh'}
-    authjwt_access_token_expires: Optional[Union[bool,int,timedelta]] = timedelta(minutes=15)
-    authjwt_refresh_token_expires: Optional[Union[bool,int,timedelta]] = timedelta(days=30)
+    authjwt_secret_key: Optional[StrictStr] = None
+    authjwt_public_key: Optional[StrictStr] = None
+    authjwt_private_key: Optional[StrictStr] = None
+    authjwt_algorithm: Optional[StrictStr] = "HS256"
+    authjwt_decode_algorithms: Optional[List[StrictStr]] = None
+    authjwt_decode_leeway: Optional[Union[StrictInt,timedelta]] = 0
+    authjwt_encode_issuer: Optional[StrictStr] = None
+    authjwt_decode_issuer: Optional[StrictStr] = None
+    authjwt_decode_audience: Optional[Union[StrictStr,Sequence[StrictStr]]] = None
+    authjwt_blacklist_enabled: Optional[StrictStr] = None
+    authjwt_blacklist_token_checks: Optional[Sequence[StrictStr]] = {'access','refresh'}
+    authjwt_access_token_expires: Optional[Union[StrictBool,StrictInt,timedelta]] = timedelta(minutes=15)
+    authjwt_refresh_token_expires: Optional[Union[StrictBool,StrictInt,timedelta]] = timedelta(days=30)
 
     @root_validator(pre=True)
     def validate_blacklist_enabled(cls, values):
