@@ -1,4 +1,4 @@
-import pytest, os
+import pytest, os, jwt
 from .utils import reset_config
 from fastapi_jwt_auth import AuthJWT
 from fastapi import FastAPI, Depends
@@ -39,6 +39,22 @@ def test_default_config():
 
     assert AuthJWT._refresh_token_expires.__class__ == timedelta
     assert int(AuthJWT._refresh_token_expires.total_seconds()) == 2592000
+
+def test_token_expired_false(Authorize):
+    class TokenFalse(BaseSettings):
+        authjwt_secret_key: str = "testing"
+        authjwt_access_token_expires: bool = False
+        authjwt_refresh_token_expires: bool = False
+
+    @AuthJWT.load_config
+    def get_expired_false():
+        return TokenFalse()
+
+    access_token = Authorize.create_access_token(identity=1)
+    assert 'exp' not in jwt.decode(access_token,"testing",algorithms="HS256")
+
+    refresh_token = Authorize.create_refresh_token(identity=1)
+    assert 'exp' not in jwt.decode(refresh_token,"testing",algorithms="HS256")
 
 def test_secret_key_not_exist(client,Authorize):
     reset_config()
@@ -193,9 +209,19 @@ def test_load_env_from_outside():
         def get_invalid_access_token():
             return [("authjwt_access_token_expires","lol")]
 
+    with pytest.raises(ValidationError,match=r"AUTHJWT_ACCESS_TOKEN_EXPIRES"):
+        @AuthJWT.load_config
+        def get_access_token_true_value():
+            return [("authjwt_access_token_expires",True)]
+
     with pytest.raises(ValidationError,match=r"AUTHJWT_REFRESH_TOKEN_EXPIRES"):
         @AuthJWT.load_config
         def get_invalid_refresh_token():
             return [("authjwt_refresh_token_expires","lol")]
+
+    with pytest.raises(ValidationError,match=r"AUTHJWT_REFRESH_TOKEN_EXPIRES"):
+        @AuthJWT.load_config
+        def get_refresh_token_true_value():
+            return [("authjwt_refresh_token_expires",True)]
 
     reset_config()

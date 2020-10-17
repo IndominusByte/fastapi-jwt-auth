@@ -47,7 +47,7 @@ def encoded_token(default_access_token):
 def test_verified_token(client,encoded_token,Authorize):
     class SettingsOne(BaseSettings):
         AUTHJWT_SECRET_KEY: str = "secret-key"
-        AUTHJWT_ACCESS_TOKEN_EXPIRES: int = 1
+        AUTHJWT_ACCESS_TOKEN_EXPIRES: int = 2
 
     @AuthJWT.load_config
     def get_settings_one():
@@ -64,7 +64,7 @@ def test_verified_token(client,encoded_token,Authorize):
     assert response.json() == {'detail': 'Signature verification failed'}
     # ExpiredSignatureError
     token = Authorize.create_access_token(identity='test')
-    time.sleep(2)
+    time.sleep(3)
     response = client.get('/protected',headers={"Authorization":f"Bearer {token.decode('utf-8')}"})
     assert response.status_code == 422
     assert response.json() == {'detail': 'Signature has expired'}

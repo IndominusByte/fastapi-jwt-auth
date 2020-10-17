@@ -6,8 +6,8 @@ from datetime import timedelta, datetime, timezone
 def test_create_access_token(Authorize):
     class Settings(BaseSettings):
         AUTHJWT_SECRET_KEY: str = "testing"
-        AUTHJWT_ACCESS_TOKEN_EXPIRES: int = 1
-        AUTHJWT_REFRESH_TOKEN_EXPIRES: int = 3
+        AUTHJWT_ACCESS_TOKEN_EXPIRES: int = 2
+        AUTHJWT_REFRESH_TOKEN_EXPIRES: int = 4
 
     @AuthJWT.load_config
     def get_settings():
@@ -44,7 +44,7 @@ def test_create_dynamic_access_token_expires(Authorize):
     token = Authorize.create_access_token(identity=1,expires_time=timedelta(days=1))
     assert jwt.decode(token,"testing",algorithms="HS256")['exp'] == expires_time
 
-    expires_time = int(datetime.now(timezone.utc).timestamp()) + 1
+    expires_time = int(datetime.now(timezone.utc).timestamp()) + 2
     token = Authorize.create_access_token(identity=1,expires_time=True)
     assert jwt.decode(token,"testing",algorithms="HS256")['exp'] == expires_time
 
@@ -63,7 +63,7 @@ def test_create_dynamic_refresh_token_expires(Authorize):
     token = Authorize.create_refresh_token(identity=1,expires_time=timedelta(days=1))
     assert jwt.decode(token,"testing",algorithms="HS256")['exp'] == expires_time
 
-    expires_time = int(datetime.now(timezone.utc).timestamp()) + 3
+    expires_time = int(datetime.now(timezone.utc).timestamp()) + 4
     token = Authorize.create_refresh_token(identity=1,expires_time=True)
     assert jwt.decode(token,"testing",algorithms="HS256")['exp'] == expires_time
 

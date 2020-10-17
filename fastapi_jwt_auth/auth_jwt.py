@@ -249,6 +249,7 @@ class AuthJWT(AuthProperty):
             if type_token == 'refresh':
                 expires_time = expires_time or self._refresh_token_expires
 
+        if expires_time is not False:
             if isinstance(expires_time, bool):
                 if type_token == 'access':
                     expires_time = self._access_token_expires
@@ -276,7 +277,6 @@ class AuthJWT(AuthProperty):
 
         :return: hash token
         """
-
         return self._create_token(
             identity=identity,
             type_token="access",
@@ -302,7 +302,6 @@ class AuthJWT(AuthProperty):
 
         :return: hash token
         """
-
         return self._create_token(
             identity=identity,
             type_token="refresh",

@@ -15,8 +15,8 @@ class LoadSettings(BaseModel):
     authjwt_decode_audience: Optional[Union[str,Sequence[str]]] = None
     authjwt_blacklist_enabled: Optional[str] = None
     authjwt_blacklist_token_checks: Optional[Sequence[str]] = {'access','refresh'}
-    authjwt_access_token_expires: Optional[Union[int,timedelta]] = timedelta(minutes=15)
-    authjwt_refresh_token_expires: Optional[Union[int,timedelta]] = timedelta(days=30)
+    authjwt_access_token_expires: Optional[Union[bool,int,timedelta]] = timedelta(minutes=15)
+    authjwt_refresh_token_expires: Optional[Union[bool,int,timedelta]] = timedelta(days=30)
 
     @root_validator(pre=True)
     def validate_blacklist_enabled(cls, values):
@@ -73,11 +73,17 @@ class LoadSettings(BaseModel):
         ):
             raise TypeError("The 'AUTHJWT_BLACKLIST_TOKEN_CHECKS' must be a sequence")
 
-        if _access_token_expires and not isinstance(_access_token_expires, (timedelta, int)):
-            raise TypeError("The 'AUTHJWT_ACCESS_TOKEN_EXPIRES' must be a timedelta or integer")
+        if _access_token_expires and not isinstance(_access_token_expires, (timedelta,int,bool)):
+            raise TypeError("The 'AUTHJWT_ACCESS_TOKEN_EXPIRES' must be between timedelta, int, bool")
 
-        if _refresh_token_expires and not isinstance(_refresh_token_expires, (timedelta, int)):
-            raise TypeError("The 'AUTHJWT_REFRESH_TOKEN_EXPIRES' must be a timedelta or integer")
+        if _access_token_expires and _access_token_expires is True:
+            raise TypeError("The 'AUTHJWT_ACCESS_TOKEN_EXPIRES' only accept value False")
+
+        if _refresh_token_expires and not isinstance(_refresh_token_expires, (timedelta,int,bool)):
+            raise TypeError("The 'AUTHJWT_REFRESH_TOKEN_EXPIRES' must be between timedelta, int, bool")
+
+        if _refresh_token_expires and _refresh_token_expires is True:
+            raise TypeError("The 'AUTHJWT_REFRESH_TOKEN_EXPIRES' only accept value False")
 
         return values
 
