@@ -1,11 +1,19 @@
 import pytest
-from fastapi_jwt_auth import AuthJWT
-from fastapi import FastAPI, Depends
+from fastapi_jwt_auth import AuthJWT, AuthJWTException
+from fastapi import FastAPI, Depends, Request
+from fastapi.responses import JSONResponse
 from fastapi.testclient import TestClient
 
 @pytest.fixture(scope='function')
 def client():
     app = FastAPI()
+
+    @app.exception_handler(AuthJWTException)
+    def authjwt_exception_handler(request: Request, exc: AuthJWTException):
+        return JSONResponse(
+            status_code=exc.status_code,
+            content={"detail": exc.message}
+        )
 
     @app.get('/jwt-required')
     def jwt_required(Authorize: AuthJWT = Depends()):

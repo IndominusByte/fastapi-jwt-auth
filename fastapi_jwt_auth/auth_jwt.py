@@ -1,12 +1,19 @@
-import jwt
-from re import match
-from uuid import uuid4
-from datetime import datetime, timezone, timedelta
-from fastapi import Request, HTTPException
-from fastapi_jwt_auth.auth_config import AuthConfig
+import jwt, re, uuid
 from jwt.algorithms import requires_cryptography, has_crypto
+from datetime import datetime, timezone, timedelta
 from typing import Optional, Dict, Union, Sequence
 from types import GeneratorType
+from fastapi import Request
+from fastapi_jwt_auth.auth_config import AuthConfig
+from fastapi_jwt_auth.exceptions import (
+    InvalidHeaderError,
+    JWTDecodeError,
+    RevokedTokenError,
+    MissingHeaderError,
+    AccessTokenRequired,
+    RefreshTokenRequired,
+    FreshTokenRequired
+)
 
 class AuthJWT(AuthConfig):
     def __init__(self,res: Request):
@@ -37,17 +44,17 @@ class AuthJWT(AuthConfig):
             # <HeaderName>: <JWT>
             if len(parts) != 1:
                 msg = "Bad {} header. Expected value '<JWT>'".format(header_name)
-                raise HTTPException(status_code=422,detail=msg)
+                raise InvalidHeaderError(status_code=422,message=msg)
             self._token = parts[0]
         else:
             # <HeaderName>: <HeaderType> <JWT>
-            if not match(r"{}\s".format(header_type),auth) or len(parts) != 2:
+            if not re.match(r"{}\s".format(header_type),auth) or len(parts) != 2:
                 msg = "Bad {} header. Expected value '{} <JWT>'".format(header_name,header_type)
-                raise HTTPException(status_code=422,detail=msg)
+                raise InvalidHeaderError(status_code=422,message=msg)
             self._token = parts[1]
 
     def _get_jwt_identifier(self) -> str:
-        return str(uuid4())
+        return str(uuid.uuid4())
 
     def _get_int_from_datetime(self,value: datetime) -> int:
         """
@@ -204,7 +211,7 @@ class AuthJWT(AuthConfig):
         try:
             unverified_headers = self.get_unverified_jwt_headers(encoded_token)
         except Exception as err:
-            raise HTTPException(status_code=422,detail=str(err))
+            raise InvalidHeaderError(status_code=422,message=str(err))
 
         try:
             secret_key = self._get_secret_key(unverified_headers['alg'],"decode")
@@ -221,7 +228,7 @@ class AuthJWT(AuthConfig):
                 algorithms=algorithms
             )
         except Exception as err:
-            raise HTTPException(status_code=422,detail=str(err))
+            raise JWTDecodeError(status_code=422,message=str(err))
 
     def blacklist_is_enabled(self) -> bool:
         """
@@ -250,7 +257,7 @@ class AuthJWT(AuthConfig):
                 "AUTHJWT_BLACKLIST_ENABLED is 'true'")
 
         if self._token_in_blacklist_callback.__func__(raw_token):
-            raise HTTPException(status_code=401,detail="Token has been revoked")
+            raise RevokedTokenError(status_code=401,message="Token has been revoked")
 
     def _get_expired_time(
         self,
@@ -346,10 +353,10 @@ class AuthJWT(AuthConfig):
             self._verifying_token(encoded_token=self._token,issuer=self._decode_issuer)
 
         if not self._token:
-            raise HTTPException(status_code=401,detail="Missing {} Header".format(self._header_name))
+            raise MissingHeaderError(status_code=401,message="Missing {} Header".format(self._header_name))
 
         if self.get_raw_jwt()['type'] != 'access':
-            raise HTTPException(status_code=422,detail="Only access tokens are allowed")
+            raise AccessTokenRequired(status_code=422,message="Only access tokens are allowed")
 
     def jwt_optional(self) -> None:
         """
@@ -363,7 +370,7 @@ class AuthJWT(AuthConfig):
             self._verifying_token(encoded_token=self._token,issuer=self._decode_issuer)
 
         if self._token and self.get_raw_jwt()['type'] != 'access':
-            raise HTTPException(status_code=422,detail="Only access tokens are allowed")
+            raise AccessTokenRequired(status_code=422,message="Only access tokens are allowed")
 
     def jwt_refresh_token_required(self) -> None:
         """
@@ -375,10 +382,10 @@ class AuthJWT(AuthConfig):
             self._verifying_token(encoded_token=self._token)
 
         if not self._token:
-            raise HTTPException(status_code=401,detail="Missing {} Header".format(self._header_name))
+            raise MissingHeaderError(status_code=401,message="Missing {} Header".format(self._header_name))
 
         if self.get_raw_jwt()['type'] != 'refresh':
-            raise HTTPException(status_code=422,detail="Only refresh tokens are allowed")
+            raise RefreshTokenRequired(status_code=422,message="Only refresh tokens are allowed")
 
     def fresh_jwt_required(self) -> None:
         """
@@ -390,13 +397,13 @@ class AuthJWT(AuthConfig):
             self._verifying_token(encoded_token=self._token,issuer=self._decode_issuer)
 
         if not self._token:
-            raise HTTPException(status_code=401,detail="Missing {} Header".format(self._header_name))
+            raise MissingHeaderError(status_code=401,message="Missing {} Header".format(self._header_name))
 
         if self.get_raw_jwt()['type'] != 'access':
-            raise HTTPException(status_code=422,detail="Only access tokens are allowed")
+            raise AccessTokenRequired(status_code=422,message="Only access tokens are allowed")
 
         if not self.get_raw_jwt()['fresh']:
-            raise HTTPException(status_code=401,detail="Fresh token required")
+            raise FreshTokenRequired(status_code=401,message="Fresh token required")
 
     def get_raw_jwt(self) -> Optional[Dict[str,Union[str,int,bool]]]:
         """
