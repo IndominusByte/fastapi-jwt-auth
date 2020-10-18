@@ -346,7 +346,7 @@ class AuthJWT(AuthConfig):
             self._verifying_token(encoded_token=self._token,issuer=self._decode_issuer)
 
         if not self._token:
-            raise HTTPException(status_code=401,detail="Missing Authorization Header")
+            raise HTTPException(status_code=401,detail="Missing {} Header".format(self._header_name))
 
         if self.get_raw_jwt()['type'] != 'access':
             raise HTTPException(status_code=422,detail="Only access tokens are allowed")
@@ -375,7 +375,7 @@ class AuthJWT(AuthConfig):
             self._verifying_token(encoded_token=self._token)
 
         if not self._token:
-            raise HTTPException(status_code=401,detail="Missing Authorization Header")
+            raise HTTPException(status_code=401,detail="Missing {} Header".format(self._header_name))
 
         if self.get_raw_jwt()['type'] != 'refresh':
             raise HTTPException(status_code=422,detail="Only refresh tokens are allowed")
@@ -390,7 +390,7 @@ class AuthJWT(AuthConfig):
             self._verifying_token(encoded_token=self._token,issuer=self._decode_issuer)
 
         if not self._token:
-            raise HTTPException(status_code=401,detail="Missing Authorization Header")
+            raise HTTPException(status_code=401,detail="Missing {} Header".format(self._header_name))
 
         if self.get_raw_jwt()['type'] != 'access':
             raise HTTPException(status_code=422,detail="Only access tokens are allowed")

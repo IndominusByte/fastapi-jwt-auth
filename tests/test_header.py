@@ -2,6 +2,8 @@ import pytest
 from fastapi_jwt_auth import AuthJWT
 from fastapi import FastAPI, Depends
 from fastapi.testclient import TestClient
+from typing import Optional
+from pydantic import BaseSettings
 
 @pytest.fixture(scope='function')
 def client():
@@ -70,3 +72,68 @@ def test_get_jwt_headers_from_request(client, Authorize):
 
     response = client.get('/get_headers_refresh',headers={"Authorization":f"Bearer {refresh_token.decode('utf-8')}"})
     assert response.json()['refresh'] == 'foo'
+
+def test_custom_header_name(client,Authorize):
+    class HeaderName(BaseSettings):
+        authjwt_secret_key: str = "secret"
+        authjwt_header_name: str = "Foo"
+
+    @AuthJWT.load_config
+    def get_header_name():
+        return HeaderName()
+
+    token = Authorize.create_access_token(identity=1)
+    # Insure 'default' headers no longer work
+    response = client.get('/protected',headers={"Authorization":f"Bearer {token.decode('utf-8')}"})
+    assert response.status_code == 401
+    assert response.json() == {'detail': 'Missing Foo Header'}
+
+    # Insure new headers do work
+    response = client.get('/protected',headers={"Foo":f"Bearer {token.decode('utf-8')}"})
+    assert response.status_code == 200
+    assert response.json() == {'hello':'world'}
+
+    # Invalid headers
+    response = client.get('/protected',headers={"Foo":"Bearer test test"})
+    assert response.status_code == 422
+    assert response.json() == {'detail': "Bad Foo header. Expected value 'Bearer <JWT>'"}
+
+    AuthJWT._header_name = "Authorization"
+
+def test_custom_header_type(client,Authorize):
+    class HeaderType(BaseSettings):
+        authjwt_secret_key: str = "secret"
+        authjwt_header_type: str = "JWT"
+
+    @AuthJWT.load_config
+    def get_header_type():
+        return HeaderType()
+
+    token = Authorize.create_access_token(identity=1)
+    # Insure 'default' headers no longer work
+    response = client.get('/protected',headers={"Authorization":f"Bearer {token.decode('utf-8')}"})
+    assert response.status_code == 422
+    assert response.json() == {'detail': "Bad Authorization header. Expected value 'JWT <JWT>'"}
+    # Insure new headers do work
+    response = client.get('/protected',headers={"Authorization":f"JWT {token.decode('utf-8')}"})
+    assert response.status_code == 200
+    assert response.json() == {'hello':'world'}
+
+    class HeaderTypeNone(BaseSettings):
+        authjwt_secret_key: str = "secret"
+        authjwt_header_type: Optional[str] = None
+
+    @AuthJWT.load_config
+    def get_header_type_none():
+        return HeaderTypeNone()
+
+    # Insure 'JWT' headers no longer work
+    response = client.get('/protected',headers={"Authorization":f"JWT {token.decode('utf-8')}"})
+    assert response.status_code == 422
+    assert response.json() == {'detail': "Bad Authorization header. Expected value '<JWT>'"}
+    # Insure new headers without a type also work
+    response = client.get('/protected',headers={"Authorization":f"{token.decode('utf-8')}"})
+    assert response.status_code == 200
+    assert response.json() == {'hello':'world'}
+
+    AuthJWT._header_type = "Bearer"
