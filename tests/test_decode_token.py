@@ -1,5 +1,6 @@
 import pytest, jwt, time, os
-from fastapi_jwt_auth import AuthJWT, AuthJWTException
+from fastapi_jwt_auth import AuthJWT
+from fastapi_jwt_auth.exceptions import AuthJWTException
 from fastapi import FastAPI, Depends, Request
 from fastapi.responses import JSONResponse
 from fastapi.testclient import TestClient
