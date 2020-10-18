@@ -4,7 +4,7 @@ from fastapi_jwt_auth import AuthJWT
 from fastapi import FastAPI, Depends
 from fastapi.testclient import TestClient
 from pydantic import BaseSettings, ValidationError
-from typing import Sequence
+from typing import Sequence, Optional
 from datetime import timedelta
 
 @pytest.fixture(scope='function')
@@ -33,6 +33,8 @@ def test_default_config():
     assert AuthJWT._blacklist_enabled is None
     assert AuthJWT._blacklist_token_checks == {'access','refresh'}
     assert AuthJWT._token_in_blacklist_callback is None
+    assert AuthJWT._header_name == "Authorization"
+    assert AuthJWT._header_type == "Bearer"
 
     assert AuthJWT._access_token_expires.__class__ == timedelta
     assert int(AuthJWT._access_token_expires.total_seconds()) == 900
@@ -123,6 +125,8 @@ def test_load_env_from_outside():
         authjwt_decode_audience: str = 'urn:foo'
         authjwt_blacklist_token_checks: Sequence = ['access']
         authjwt_blacklist_enabled: str = "false"
+        authjwt_header_name: str = "Auth-Token"
+        authjwt_header_type: Optional[str] = None
         authjwt_access_token_expires: timedelta = timedelta(minutes=2)
         authjwt_refresh_token_expires: timedelta = timedelta(days=5)
 
@@ -141,6 +145,8 @@ def test_load_env_from_outside():
     assert AuthJWT._decode_audience == 'urn:foo'
     assert AuthJWT._blacklist_token_checks == ['access']
     assert AuthJWT._blacklist_enabled == "false"
+    assert AuthJWT._header_name == "Auth-Token"
+    assert AuthJWT._header_type is None
     assert AuthJWT._access_token_expires == timedelta(minutes=2)
     assert AuthJWT._refresh_token_expires == timedelta(days=5)
 
@@ -203,6 +209,16 @@ def test_load_env_from_outside():
         @AuthJWT.load_config
         def get_invalid_blacklist_token_checks():
             return [("authjwt_blacklist_token_checks","string")]
+
+    with pytest.raises(ValidationError,match=r"AUTHJWT_HEADER_NAME"):
+        @AuthJWT.load_config
+        def get_invalid_header_name():
+            return [("authjwt_header_name",1)]
+
+    with pytest.raises(ValidationError,match=r"AUTHJWT_HEADER_TYPE"):
+        @AuthJWT.load_config
+        def get_invalid_header_type():
+            return [("authjwt_header_type",1)]
 
     with pytest.raises(ValidationError,match=r"AUTHJWT_ACCESS_TOKEN_EXPIRES"):
         @AuthJWT.load_config

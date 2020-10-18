@@ -3,12 +3,12 @@ from re import match
 from uuid import uuid4
 from datetime import datetime, timezone, timedelta
 from fastapi import Request, HTTPException
-from fastapi_jwt_auth.auth_property import AuthProperty
+from fastapi_jwt_auth.auth_config import AuthConfig
 from jwt.algorithms import requires_cryptography, has_crypto
 from typing import Optional, Dict, Union, Sequence
 from types import GeneratorType
 
-class AuthJWT(AuthProperty):
+class AuthJWT(AuthConfig):
     def __init__(self,res: Request):
         """
         Get jwt from header or cookie (development) from an incoming request

@@ -1,9 +1,9 @@
-from fastapi_jwt_auth.config import LoadSettings
-from datetime import timedelta
+from fastapi_jwt_auth.config import LoadConfig
 from pydantic import ValidationError
 from typing import Callable, List
+from datetime import timedelta
 
-class AuthProperty:
+class AuthConfig:
     _token = None
     _secret_key = None
     _public_key = None
@@ -23,9 +23,9 @@ class AuthProperty:
     _refresh_token_expires = timedelta(days=30)
 
     @classmethod
-    def load_config(cls, settings: Callable[...,List[tuple]]) -> "AuthProperty":
+    def load_config(cls, settings: Callable[...,List[tuple]]) -> "AuthConfig":
         try:
-            config = LoadSettings(**{key.lower():value for key,value in settings()})
+            config = LoadConfig(**{key.lower():value for key,value in settings()})
 
             cls._secret_key = config.authjwt_secret_key
             cls._public_key = config.authjwt_public_key
@@ -38,6 +38,8 @@ class AuthProperty:
             cls._decode_audience = config.authjwt_decode_audience
             cls._blacklist_enabled = config.authjwt_blacklist_enabled
             cls._blacklist_token_checks = config.authjwt_blacklist_token_checks
+            cls._header_name = config.authjwt_header_name
+            cls._header_type = config.authjwt_header_type
             cls._access_token_expires = config.authjwt_access_token_expires
             cls._refresh_token_expires = config.authjwt_refresh_token_expires
         except ValidationError:
@@ -46,7 +48,7 @@ class AuthProperty:
             raise TypeError("Config must be pydantic 'BaseSettings' or list of tuple")
 
     @classmethod
-    def token_in_blacklist_loader(cls, callback: Callable[...,bool]) -> "AuthProperty":
+    def token_in_blacklist_loader(cls, callback: Callable[...,bool]) -> "AuthConfig":
         """
         This decorator sets the callback function that will be called when
         a protected endpoint is accessed and will check if the JWT has been

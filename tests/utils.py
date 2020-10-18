@@ -14,5 +14,7 @@ def reset_config():
     AuthJWT._blacklist_enabled = None
     AuthJWT._blacklist_token_checks = {'access','refresh'}
     AuthJWT._token_in_blacklist_callback = None
+    AuthJWT._header_name = "Authorization"
+    AuthJWT._header_type = "Bearer"
     AuthJWT._access_token_expires = timedelta(minutes=15)
     AuthJWT._refresh_token_expires = timedelta(days=30)

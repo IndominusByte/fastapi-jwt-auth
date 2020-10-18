@@ -10,7 +10,7 @@ from pydantic import (
     StrictStr
 )
 
-class LoadSettings(BaseModel):
+class LoadConfig(BaseModel):
     authjwt_secret_key: Optional[StrictStr] = None
     authjwt_public_key: Optional[StrictStr] = None
     authjwt_private_key: Optional[StrictStr] = None
@@ -22,6 +22,8 @@ class LoadSettings(BaseModel):
     authjwt_decode_audience: Optional[Union[StrictStr,Sequence[StrictStr]]] = None
     authjwt_blacklist_enabled: Optional[StrictStr] = None
     authjwt_blacklist_token_checks: Optional[Sequence[StrictStr]] = {'access','refresh'}
+    authjwt_header_name: Optional[StrictStr] = "Authorization"
+    authjwt_header_type: Optional[StrictStr] = "Bearer"
     authjwt_access_token_expires: Optional[Union[StrictBool,StrictInt,timedelta]] = timedelta(minutes=15)
     authjwt_refresh_token_expires: Optional[Union[StrictBool,StrictInt,timedelta]] = timedelta(days=30)
 
@@ -38,6 +40,8 @@ class LoadSettings(BaseModel):
         _decode_audience = values.get("authjwt_decode_audience")
         _blacklist_enabled = values.get("authjwt_blacklist_enabled")
         _blacklist_token_checks = values.get("authjwt_blacklist_token_checks")
+        _header_name = values.get("authjwt_header_name")
+        _header_type = values.get("authjwt_header_type")
         _access_token_expires = values.get("authjwt_access_token_expires")
         _refresh_token_expires = values.get("authjwt_refresh_token_expires")
 
@@ -79,6 +83,12 @@ class LoadSettings(BaseModel):
             not isinstance(_blacklist_token_checks, (list, tuple, set, frozenset, GeneratorType))
         ):
             raise TypeError("The 'AUTHJWT_BLACKLIST_TOKEN_CHECKS' must be a sequence")
+
+        if _header_name and not isinstance(_header_name, str):
+            raise TypeError("The 'AUTHJWT_HEADER_NAME' must be a string")
+
+        if _header_type and not isinstance(_header_type, str):
+            raise TypeError("The 'AUTHJWT_HEADER_TYPE' must be a string")
 
         if _access_token_expires and not isinstance(_access_token_expires, (timedelta,int,bool)):
             raise TypeError("The 'AUTHJWT_ACCESS_TOKEN_EXPIRES' must be between timedelta, int, bool")
