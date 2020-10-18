@@ -17,6 +17,8 @@ class AuthProperty:
     _blacklist_enabled = None
     _blacklist_token_checks = {'access','refresh'}
     _token_in_blacklist_callback = None
+    _header_name = "Authorization"
+    _header_type = "Bearer"
     _access_token_expires = timedelta(minutes=15)
     _refresh_token_expires = timedelta(days=30)
 

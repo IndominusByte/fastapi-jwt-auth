@@ -80,7 +80,7 @@ def test_blacklist_enabled_without_callback(client):
     def get_settings_one():
         return SettingsOne()
 
-    Authorize = AuthJWT(authorization=None)
+    Authorize = AuthJWT(None)
 
     token = Authorize.create_access_token(identity='test')
 

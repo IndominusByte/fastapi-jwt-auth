@@ -2,24 +2,49 @@ import jwt
 from re import match
 from uuid import uuid4
 from datetime import datetime, timezone, timedelta
-from fastapi import Header, HTTPException
+from fastapi import Request, HTTPException
 from fastapi_jwt_auth.auth_property import AuthProperty
 from jwt.algorithms import requires_cryptography, has_crypto
 from typing import Optional, Dict, Union, Sequence
 from types import GeneratorType
 
 class AuthJWT(AuthProperty):
-    def __init__(self,authorization: Optional[str] = Header(None)):
+    def __init__(self,res: Request):
         """
-        Get header Authorization with format 'Bearer <JWT>' and verified token, when Authorization header exists
+        Get jwt from header or cookie (development) from an incoming request
 
-        :param Authorization: get Authorization from the header when class initialize
+        :param res: all incoming request
+        :return: None
         """
-        if authorization:
-            if match(r"Bearer\s",authorization) and len(authorization.split(' ')) == 2 and authorization.split(' ')[1]:
-                self._token = authorization.split(' ')[1]
-            else:
-                raise HTTPException(status_code=422,detail="Bad Authorization header. Expected value 'Bearer <JWT>'")
+        if res:
+            auth = res.headers.get(self._header_name.lower())
+            if auth: self._get_jwt_from_headers(auth)
+
+    def _get_jwt_from_headers(self,auth: str) -> "AuthJWT":
+        """
+        Get token from the header
+
+        :param auth: value from HeaderName
+        :return: None
+        """
+        header_name = self._header_name
+        header_type = self._header_type
+
+        parts = auth.split()
+
+        # Make sure the header is in a valid format that we are expecting, ie
+        if not header_type:
+            # <HeaderName>: <JWT>
+            if len(parts) != 1:
+                msg = "Bad {} header. Expected value '<JWT>'".format(header_name)
+                raise HTTPException(status_code=422,detail=msg)
+            self._token = parts[0]
+        else:
+            # <HeaderName>: <HeaderType> <JWT>
+            if not match(r"{}\s".format(header_type),auth) or len(parts) != 2:
+                msg = "Bad {} header. Expected value '{} <JWT>'".format(header_name,header_type)
+                raise HTTPException(status_code=422,detail=msg)
+            self._token = parts[1]
 
     def _get_jwt_identifier(self) -> str:
         return str(uuid4())
