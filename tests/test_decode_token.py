@@ -200,6 +200,39 @@ def test_invalid_decode_algorithms(client,Authorize):
 
     AuthJWT._decode_algorithms = None
 
+def test_valid_asymmetric_algorithms(client,Authorize):
+    hs256_token = Authorize.create_access_token(identity=1)
+
+    DIR = os.path.abspath(os.path.dirname(__file__))
+    private_txt = os.path.join(DIR,'private_key.txt')
+    public_txt = os.path.join(DIR,'public_key.txt')
+
+    with open(private_txt) as f:
+        PRIVATE_KEY = f.read().strip()
+
+    with open(public_txt) as f:
+        PUBLIC_KEY = f.read().strip()
+
+    class SettingsAsymmetric(BaseSettings):
+        authjwt_algorithm: str = "RS256"
+        authjwt_secret_key: str = "secret"
+        authjwt_private_key: str = PRIVATE_KEY
+        authjwt_public_key: str = PUBLIC_KEY
+
+    @AuthJWT.load_config
+    def get_settings_asymmetric():
+        return SettingsAsymmetric()
+
+    rs256_token = Authorize.create_access_token(identity=1)
+
+    response = client.get('/protected',headers={'Authorization':f"Bearer {hs256_token}"})
+    assert response.status_code == 422
+    assert response.json() == {'detail': 'The specified alg value is not allowed'}
+
+    response = client.get('/protected',headers={'Authorization':f"Bearer {rs256_token}"})
+    assert response.status_code == 200
+    assert response.json() == {'hello':'world'}
+
 def test_invalid_asymmetric_algorithms(client,Authorize):
     class SettingsAsymmetricOne(BaseSettings):
         authjwt_algorithm: str = "RS256"
@@ -233,36 +266,3 @@ def test_invalid_asymmetric_algorithms(client,Authorize):
     AuthJWT._public_key = None
     AuthJWT._algorithm = "HS256"
     AuthJWT._secret_key = "secret"
-
-def test_valid_asymmetric_algorithms(client,Authorize):
-    hs256_token = Authorize.create_access_token(identity=1)
-
-    DIR = os.path.abspath(os.path.dirname(__file__))
-    private_txt = os.path.join(DIR,'private_key.txt')
-    public_txt = os.path.join(DIR,'public_key.txt')
-
-    with open(private_txt) as f:
-        PRIVATE_KEY = f.read().strip()
-
-    with open(public_txt) as f:
-        PUBLIC_KEY = f.read().strip()
-
-    class SettingsAsymmetric(BaseSettings):
-        authjwt_algorithm: str = "RS256"
-        authjwt_secret_key: str = "secret"
-        authjwt_private_key: str = PRIVATE_KEY
-        authjwt_public_key: str = PUBLIC_KEY
-
-    @AuthJWT.load_config
-    def get_settings_asymmetric():
-        return SettingsAsymmetric()
-
-    rs256_token = Authorize.create_access_token(identity=1)
-
-    response = client.get('/protected',headers={'Authorization':f"Bearer {hs256_token}"})
-    assert response.status_code == 422
-    assert response.json() == {'detail': 'The specified alg value is not allowed'}
-
-    response = client.get('/protected',headers={'Authorization':f"Bearer {rs256_token}"})
-    assert response.status_code == 200
-    assert response.json() == {'hello':'world'}

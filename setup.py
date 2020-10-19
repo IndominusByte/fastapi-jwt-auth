@@ -16,7 +16,7 @@ setuptools.setup(
     zip_safe=False,
     install_requires=[
         'fastapi>=0.61.0',
-        'PyJWT>=1.7.1'
+        'PyJWT>=1.7.1,<2.0.0'
     ],
     extras_require={
         'asymmetric': ["cryptography>=2.6,<4.0.0"]

@@ -30,9 +30,9 @@ def test_default_config():
     assert AuthJWT._encode_issuer is None
     assert AuthJWT._decode_issuer is None
     assert AuthJWT._decode_audience is None
-    assert AuthJWT._blacklist_enabled is None
-    assert AuthJWT._blacklist_token_checks == {'access','refresh'}
-    assert AuthJWT._token_in_blacklist_callback is None
+    assert AuthJWT._denylist_enabled is None
+    assert AuthJWT._denylist_token_checks == {'access','refresh'}
+    assert AuthJWT._token_in_denylist_callback is None
     assert AuthJWT._header_name == "Authorization"
     assert AuthJWT._header_type == "Bearer"
 
@@ -71,12 +71,12 @@ def test_secret_key_not_exist(client,Authorize):
     with pytest.raises(RuntimeError,match=r"AUTHJWT_SECRET_KEY"):
         client.get('/protected',headers={"Authorization":f"Bearer {token}"})
 
-def test_blacklist_enabled_without_callback(client):
+def test_denylist_enabled_without_callback(client):
     # set authjwt_secret_key for create token
     class SettingsOne(BaseSettings):
         authjwt_secret_key: str = "secret-key"
-        # AuthJWT blacklist won't trigger if value not str 'true'
-        authjwt_blacklist_enabled: str = "false"
+        # AuthJWT denylist won't trigger if value not str 'true'
+        authjwt_denylist_enabled: str = "false"
 
     @AuthJWT.load_config
     def get_settings_one():
@@ -91,14 +91,14 @@ def test_blacklist_enabled_without_callback(client):
 
     class SettingsTwo(BaseSettings):
         authjwt_secret_key: str = "secret-key"
-        authjwt_blacklist_enabled: str = "true"
-        authjwt_blacklist_token_checks: list = ["access"]
+        authjwt_denylist_enabled: str = "true"
+        authjwt_denylist_token_checks: list = ["access"]
 
     @AuthJWT.load_config
     def get_settings_two():
         return SettingsTwo()
 
-    with pytest.raises(RuntimeError,match=r"@AuthJWT.token_in_blacklist_loader"):
+    with pytest.raises(RuntimeError,match=r"@AuthJWT.token_in_denylist_loader"):
         response = client.get('/protected',headers={"Authorization": f"Bearer {token}"})
 
 def test_load_env_from_outside():
@@ -123,8 +123,8 @@ def test_load_env_from_outside():
         authjwt_encode_issuer: str = "urn:foo"
         authjwt_decode_issuer: str = "urn:foo"
         authjwt_decode_audience: str = 'urn:foo'
-        authjwt_blacklist_token_checks: Sequence = ['access']
-        authjwt_blacklist_enabled: str = "false"
+        authjwt_denylist_token_checks: Sequence = ['refresh']
+        authjwt_denylist_enabled: str = "false"
         authjwt_header_name: str = "Auth-Token"
         authjwt_header_type: Optional[str] = None
         authjwt_access_token_expires: timedelta = timedelta(minutes=2)
@@ -143,8 +143,8 @@ def test_load_env_from_outside():
     assert AuthJWT._encode_issuer == "urn:foo"
     assert AuthJWT._decode_issuer == "urn:foo"
     assert AuthJWT._decode_audience == 'urn:foo'
-    assert AuthJWT._blacklist_token_checks == ['access']
-    assert AuthJWT._blacklist_enabled == "false"
+    assert AuthJWT._denylist_token_checks == ['refresh']
+    assert AuthJWT._denylist_enabled == "false"
     assert AuthJWT._header_name == "Auth-Token"
     assert AuthJWT._header_type is None
     assert AuthJWT._access_token_expires == timedelta(minutes=2)
@@ -200,15 +200,20 @@ def test_load_env_from_outside():
         def get_invalid_decode_audience():
             return [("authjwt_decode_audience",1)]
 
-    with pytest.raises(ValidationError,match=r"AUTHJWT_BLACKLIST_ENABLED"):
+    with pytest.raises(ValidationError,match=r"AUTHJWT_DENYLIST_ENABLED"):
         @AuthJWT.load_config
-        def get_invalid_blacklist():
-            return [("authjwt_blacklist_enabled","test")]
+        def get_invalid_denylist():
+            return [("authjwt_denylist_enabled","test")]
 
-    with pytest.raises(ValidationError,match=r"AUTHJWT_BLACKLIST_TOKEN_CHECKS"):
+    with pytest.raises(ValidationError,match=r"AUTHJWT_DENYLIST_TOKEN_CHECKS"):
         @AuthJWT.load_config
-        def get_invalid_blacklist_token_checks():
-            return [("authjwt_blacklist_token_checks","string")]
+        def get_invalid_denylist_token_checks():
+            return [("authjwt_denylist_token_checks","string")]
+
+    with pytest.raises(ValidationError,match=r"AUTHJWT_DENYLIST_TOKEN_CHECKS"):
+        @AuthJWT.load_config
+        def get_invalid_denylist_str_token_check():
+            return [("authjwt_denylist_token_checks",['access','refreshh'])]
 
     with pytest.raises(ValidationError,match=r"AUTHJWT_HEADER_NAME"):
         @AuthJWT.load_config

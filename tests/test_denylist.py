@@ -4,26 +4,19 @@ from fastapi_jwt_auth.exceptions import AuthJWTException
 from fastapi import FastAPI, Depends, Request
 from fastapi.responses import JSONResponse
 from fastapi.testclient import TestClient
-from pydantic import BaseSettings
 
-# setting for blacklist token
-blacklist = set()
-
-class Settings(BaseSettings):
-    authjwt_secret_key: str = 'secret-key'
-    authjwt_blacklist_enabled: str = 'true'
-
-@AuthJWT.load_config
-def get_settings():
-    return Settings()
-
-@AuthJWT.token_in_blacklist_loader
-def check_if_token_in_blacklist(decrypted_token):
-    jti = decrypted_token['jti']
-    return jti in blacklist
+# setting for denylist token
+denylist = set()
 
 @pytest.fixture(scope='function')
 def client():
+    AuthJWT._denylist_enabled = 'true'
+
+    @AuthJWT.token_in_denylist_loader
+    def check_if_token_in_denylist(decrypted_token):
+        jti = decrypted_token['jti']
+        return jti in denylist
+
     app = FastAPI()
 
     @app.exception_handler(AuthJWTException)
@@ -65,7 +58,7 @@ def refresh_token(Authorize):
     return Authorize.create_refresh_token(identity='test')
 
 @pytest.mark.parametrize("url",["/jwt-required","/jwt-optional","/fresh-jwt-required"])
-def test_non_blacklisted_access_token(client,url,access_token,Authorize):
+def test_non_denylisted_access_token(client,url,access_token,Authorize):
     response = client.get(url,headers={"Authorization":f"Bearer {access_token}"})
     assert response.status_code == 200
     assert response.json() == {'hello':'world'}
@@ -73,9 +66,9 @@ def test_non_blacklisted_access_token(client,url,access_token,Authorize):
     # revoke token in last test url
     if url == "/fresh-jwt-required":
         jti = Authorize.get_jti(access_token)
-        blacklist.add(jti)
+        denylist.add(jti)
 
-def test_non_blacklisted_refresh_token(client,refresh_token,Authorize):
+def test_non_denylisted_refresh_token(client,refresh_token,Authorize):
     url = '/jwt-refresh-required'
     response = client.get(url,headers={"Authorization":f"Bearer {refresh_token}"})
     assert response.status_code == 200
@@ -83,15 +76,15 @@ def test_non_blacklisted_refresh_token(client,refresh_token,Authorize):
 
     # revoke token
     jti = Authorize.get_jti(refresh_token)
-    blacklist.add(jti)
+    denylist.add(jti)
 
 @pytest.mark.parametrize("url",["/jwt-required","/jwt-optional","/fresh-jwt-required"])
-def test_blacklisted_access_token(client,url,access_token):
+def test_denylisted_access_token(client,url,access_token):
     response = client.get(url,headers={"Authorization":f"Bearer {access_token}"})
     assert response.status_code == 401
     assert response.json() == {'detail': 'Token has been revoked'}
 
-def test_blacklisted_refresh_token(client,refresh_token):
+def test_denylisted_refresh_token(client,refresh_token):
     url = '/jwt-refresh-required'
     response = client.get(url,headers={"Authorization":f"Bearer {refresh_token}"})
     assert response.status_code == 401

@@ -192,7 +192,7 @@ class AuthJWT(AuthConfig):
         :return: None
         """
         raw_token = self._verified_token(encoded_token=encoded_token,issuer=issuer)
-        if raw_token['type'] in self._blacklist_token_checks:
+        if raw_token['type'] in self._denylist_token_checks:
             self._check_token_is_revoked(raw_token)
 
     def _verified_token(self,encoded_token: str, issuer: Optional[str] = None) -> Dict[str,Union[str,int,bool]]:
@@ -227,33 +227,33 @@ class AuthJWT(AuthConfig):
         except Exception as err:
             raise JWTDecodeError(status_code=422,message=str(err))
 
-    def blacklist_is_enabled(self) -> bool:
+    def denylist_is_enabled(self) -> bool:
         """
-        Check if AUTHJWT_BLACKLIST_ENABLED not None and value is true
+        Check if AUTHJWT_DENYLIST_ENABLED not None and value is true
         """
-        return self._blacklist_enabled is not None and self._blacklist_enabled == 'true'
+        return self._denylist_enabled is not None and self._denylist_enabled == 'true'
 
-    def has_token_in_blacklist_callback(self) -> bool:
+    def has_token_in_denylist_callback(self) -> bool:
         """
-        Return True if token blacklist callback set
+        Return True if token denylist callback set
         """
-        return self._token_in_blacklist_callback is not None
+        return self._token_in_denylist_callback is not None
 
     def _check_token_is_revoked(self, raw_token: Dict[str,Union[str,int,bool]]) -> None:
         """
-        Ensure that AUTHJWT_BLACKLIST_ENABLED is true and callback regulated, and then
-        call function blacklist callback with passing decode JWT, if true
+        Ensure that AUTHJWT_DENYLIST_ENABLED is true and callback regulated, and then
+        call function denylist callback with passing decode JWT, if true
         raise exception Token has been revoked
         """
-        if not self.blacklist_is_enabled():
+        if not self.denylist_is_enabled():
             return
 
-        if not self.has_token_in_blacklist_callback():
-            raise RuntimeError("A token_in_blacklist_callback must be provided via "
-                "the '@AuthJWT.token_in_blacklist_loader' if "
-                "AUTHJWT_BLACKLIST_ENABLED is 'true'")
+        if not self.has_token_in_denylist_callback():
+            raise RuntimeError("A token_in_denylist_callback must be provided via "
+                "the '@AuthJWT.token_in_denylist_loader' if "
+                "AUTHJWT_DENYLIST_ENABLED is 'true'")
 
-        if self._token_in_blacklist_callback.__func__(raw_token):
+        if self._token_in_denylist_callback.__func__(raw_token):
             raise RevokedTokenError(status_code=401,message="Token has been revoked")
 
     def _get_expired_time(

@@ -20,15 +20,15 @@ class LoadConfig(BaseModel):
     authjwt_encode_issuer: Optional[StrictStr] = None
     authjwt_decode_issuer: Optional[StrictStr] = None
     authjwt_decode_audience: Optional[Union[StrictStr,Sequence[StrictStr]]] = None
-    authjwt_blacklist_enabled: Optional[StrictStr] = None
-    authjwt_blacklist_token_checks: Optional[Sequence[StrictStr]] = {'access','refresh'}
+    authjwt_denylist_enabled: Optional[StrictStr] = None
+    authjwt_denylist_token_checks: Optional[Sequence[StrictStr]] = {'access','refresh'}
     authjwt_header_name: Optional[StrictStr] = "Authorization"
     authjwt_header_type: Optional[StrictStr] = "Bearer"
     authjwt_access_token_expires: Optional[Union[StrictBool,StrictInt,timedelta]] = timedelta(minutes=15)
     authjwt_refresh_token_expires: Optional[Union[StrictBool,StrictInt,timedelta]] = timedelta(days=30)
 
     @root_validator(pre=True)
-    def validate_blacklist_enabled(cls, values):
+    def validate_all_config(cls, values):
         _secret_key = values.get("authjwt_secret_key")
         _public_key = values.get("authjwt_public_key")
         _private_key = values.get("authjwt_private_key")
@@ -38,8 +38,8 @@ class LoadConfig(BaseModel):
         _encode_issuer = values.get("authjwt_encode_issuer")
         _decode_issuer = values.get("authjwt_decode_issuer")
         _decode_audience = values.get("authjwt_decode_audience")
-        _blacklist_enabled = values.get("authjwt_blacklist_enabled")
-        _blacklist_token_checks = values.get("authjwt_blacklist_token_checks")
+        _denylist_enabled = values.get("authjwt_denylist_enabled")
+        _denylist_token_checks = values.get("authjwt_denylist_token_checks")
         _header_name = values.get("authjwt_header_name")
         _header_type = values.get("authjwt_header_type")
         _access_token_expires = values.get("authjwt_access_token_expires")
@@ -75,14 +75,14 @@ class LoadConfig(BaseModel):
         ):
             raise TypeError("The 'AUTHJWT_DECODE_AUDIENCE' must be a string or sequence")
 
-        if _blacklist_enabled and _blacklist_enabled not in ['true','false']:
-            raise TypeError("The 'AUTHJWT_BLACKLIST_ENABLED' must be between 'true' or 'false'")
+        if _denylist_enabled and _denylist_enabled not in ['true','false']:
+            raise TypeError("The 'AUTHJWT_DENYLIST_ENABLED' must be between 'true' or 'false'")
 
         if (
-            _blacklist_token_checks and
-            not isinstance(_blacklist_token_checks, (list, tuple, set, frozenset, GeneratorType))
+            _denylist_token_checks and
+            not isinstance(_denylist_token_checks, (list, tuple, set, frozenset, GeneratorType))
         ):
-            raise TypeError("The 'AUTHJWT_BLACKLIST_TOKEN_CHECKS' must be a sequence")
+            raise TypeError("The 'AUTHJWT_DENYLIST_TOKEN_CHECKS' must be a sequence")
 
         if _header_name and not isinstance(_header_name, str):
             raise TypeError("The 'AUTHJWT_HEADER_NAME' must be a string")
@@ -104,10 +104,10 @@ class LoadConfig(BaseModel):
 
         return values
 
-    @validator('authjwt_blacklist_token_checks', each_item=True)
-    def validate_blacklist_token_checks(cls, v):
+    @validator('authjwt_denylist_token_checks', each_item=True)
+    def validate_denylist_token_checks(cls, v):
         if v not in ['access','refresh']:
-            raise ValueError("The 'AUTHJWT_BLACKLIST_TOKEN_CHECKS' must be between 'access' or 'refresh'")
+            raise ValueError("The 'AUTHJWT_DENYLIST_TOKEN_CHECKS' must be between 'access' or 'refresh'")
 
         return v
 
