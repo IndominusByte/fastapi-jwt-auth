@@ -227,12 +227,6 @@ class AuthJWT(AuthConfig):
         except Exception as err:
             raise JWTDecodeError(status_code=422,message=str(err))
 
-    def denylist_is_enabled(self) -> bool:
-        """
-        Check if AUTHJWT_DENYLIST_ENABLED not None and value is true
-        """
-        return self._denylist_enabled is not None and self._denylist_enabled == 'true'
-
     def has_token_in_denylist_callback(self) -> bool:
         """
         Return True if token denylist callback set
@@ -245,13 +239,13 @@ class AuthJWT(AuthConfig):
         call function denylist callback with passing decode JWT, if true
         raise exception Token has been revoked
         """
-        if not self.denylist_is_enabled():
+        if not self._denylist_enabled:
             return
 
         if not self.has_token_in_denylist_callback():
             raise RuntimeError("A token_in_denylist_callback must be provided via "
                 "the '@AuthJWT.token_in_denylist_loader' if "
-                "AUTHJWT_DENYLIST_ENABLED is 'true'")
+                "AUTHJWT_DENYLIST_ENABLED is 'True'")
 
         if self._token_in_denylist_callback.__func__(raw_token):
             raise RevokedTokenError(status_code=401,message="Token has been revoked")

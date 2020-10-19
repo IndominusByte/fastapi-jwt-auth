@@ -11,7 +11,7 @@ def reset_config():
     AuthJWT._encode_issuer = None
     AuthJWT._decode_issuer = None
     AuthJWT._decode_audience = None
-    AuthJWT._denylist_enabled = None
+    AuthJWT._denylist_enabled = False
     AuthJWT._denylist_token_checks = {'access','refresh'}
     AuthJWT._token_in_denylist_callback = None
     AuthJWT._header_name = "Authorization"

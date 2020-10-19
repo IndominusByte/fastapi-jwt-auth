@@ -20,7 +20,7 @@ class LoadConfig(BaseModel):
     authjwt_encode_issuer: Optional[StrictStr] = None
     authjwt_decode_issuer: Optional[StrictStr] = None
     authjwt_decode_audience: Optional[Union[StrictStr,Sequence[StrictStr]]] = None
-    authjwt_denylist_enabled: Optional[StrictStr] = None
+    authjwt_denylist_enabled: Optional[StrictBool] = False
     authjwt_denylist_token_checks: Optional[Sequence[StrictStr]] = {'access','refresh'}
     authjwt_header_name: Optional[StrictStr] = "Authorization"
     authjwt_header_type: Optional[StrictStr] = "Bearer"
@@ -75,8 +75,8 @@ class LoadConfig(BaseModel):
         ):
             raise TypeError("The 'AUTHJWT_DECODE_AUDIENCE' must be a string or sequence")
 
-        if _denylist_enabled and _denylist_enabled not in ['true','false']:
-            raise TypeError("The 'AUTHJWT_DENYLIST_ENABLED' must be between 'true' or 'false'")
+        if _denylist_enabled and not isinstance(_denylist_enabled, bool):
+            raise TypeError("The 'AUTHJWT_DENYLIST_ENABLED' must be a boolean")
 
         if (
             _denylist_token_checks and

@@ -14,7 +14,7 @@ class AuthConfig:
     _encode_issuer = None
     _decode_issuer = None
     _decode_audience = None
-    _denylist_enabled = None
+    _denylist_enabled = False
     _denylist_token_checks = {'access','refresh'}
     _header_name = "Authorization"
     _header_type = "Bearer"

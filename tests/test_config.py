@@ -30,7 +30,7 @@ def test_default_config():
     assert AuthJWT._encode_issuer is None
     assert AuthJWT._decode_issuer is None
     assert AuthJWT._decode_audience is None
-    assert AuthJWT._denylist_enabled is None
+    assert AuthJWT._denylist_enabled is False
     assert AuthJWT._denylist_token_checks == {'access','refresh'}
     assert AuthJWT._token_in_denylist_callback is None
     assert AuthJWT._header_name == "Authorization"
@@ -75,8 +75,8 @@ def test_denylist_enabled_without_callback(client):
     # set authjwt_secret_key for create token
     class SettingsOne(BaseSettings):
         authjwt_secret_key: str = "secret-key"
-        # AuthJWT denylist won't trigger if value not str 'true'
-        authjwt_denylist_enabled: str = "false"
+        # AuthJWT denylist won't trigger if value not True
+        authjwt_denylist_enabled: bool = False
 
     @AuthJWT.load_config
     def get_settings_one():
@@ -91,7 +91,7 @@ def test_denylist_enabled_without_callback(client):
 
     class SettingsTwo(BaseSettings):
         authjwt_secret_key: str = "secret-key"
-        authjwt_denylist_enabled: str = "true"
+        authjwt_denylist_enabled: bool = True
         authjwt_denylist_token_checks: list = ["access"]
 
     @AuthJWT.load_config
@@ -124,7 +124,7 @@ def test_load_env_from_outside():
         authjwt_decode_issuer: str = "urn:foo"
         authjwt_decode_audience: str = 'urn:foo'
         authjwt_denylist_token_checks: Sequence = ['refresh']
-        authjwt_denylist_enabled: str = "false"
+        authjwt_denylist_enabled: bool = False
         authjwt_header_name: str = "Auth-Token"
         authjwt_header_type: Optional[str] = None
         authjwt_access_token_expires: timedelta = timedelta(minutes=2)
@@ -144,7 +144,7 @@ def test_load_env_from_outside():
     assert AuthJWT._decode_issuer == "urn:foo"
     assert AuthJWT._decode_audience == 'urn:foo'
     assert AuthJWT._denylist_token_checks == ['refresh']
-    assert AuthJWT._denylist_enabled == "false"
+    assert AuthJWT._denylist_enabled is False
     assert AuthJWT._header_name == "Auth-Token"
     assert AuthJWT._header_type is None
     assert AuthJWT._access_token_expires == timedelta(minutes=2)

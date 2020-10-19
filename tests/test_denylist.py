@@ -10,7 +10,7 @@ denylist = set()
 
 @pytest.fixture(scope='function')
 def client():
-    AuthJWT._denylist_enabled = 'true'
+    AuthJWT._denylist_enabled = True
 
     @AuthJWT.token_in_denylist_loader
     def check_if_token_in_denylist(decrypted_token):
