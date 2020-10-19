@@ -120,7 +120,7 @@ class AuthJWT(AuthConfig):
         headers: Optional[Dict] = None,
         issuer: Optional[str] = None,
         audience: Optional[Union[str,Sequence[str]]] = None
-    ) -> bytes:
+    ) -> str:
         """
         This function create token for access_token and refresh_token, when type_token
         is access add a fresh key to dictionary payload
@@ -136,9 +136,6 @@ class AuthJWT(AuthConfig):
 
         :return: Encoded token
         """
-        if type_token not in ['access','refresh']:
-            raise TypeError("Type token must be between access or refresh")
-
         # Validation type data
         if not isinstance(identity, (str,int)):
             raise TypeError("identity must be a string or integer")
@@ -184,9 +181,9 @@ class AuthJWT(AuthConfig):
             secret_key,
             algorithm=algorithm,
             headers=headers
-        )
+        ).decode('utf-8')
 
-    def _verifying_token(self,encoded_token: bytes, issuer: Optional[str] = None) -> None:
+    def _verifying_token(self,encoded_token: str, issuer: Optional[str] = None) -> None:
         """
         Verified token and check if token is revoked
 
@@ -198,7 +195,7 @@ class AuthJWT(AuthConfig):
         if raw_token['type'] in self._blacklist_token_checks:
             self._check_token_is_revoked(raw_token)
 
-    def _verified_token(self,encoded_token: bytes, issuer: Optional[str] = None) -> Dict[str,Union[str,int,bool]]:
+    def _verified_token(self,encoded_token: str, issuer: Optional[str] = None) -> Dict[str,Union[str,int,bool]]:
         """
         Verified token and catch all error from jwt package and return decode token
 
@@ -302,7 +299,7 @@ class AuthJWT(AuthConfig):
         headers: Optional[Dict] = None,
         expires_time: Optional[Union[timedelta,int,bool]] = None,
         audience: Optional[Union[str,Sequence[str]]] = None
-    ) -> bytes:
+    ) -> str:
         """
         Create a access token with 15 minutes for expired time (default),
         info for param and return please check to function create token
@@ -327,7 +324,7 @@ class AuthJWT(AuthConfig):
         headers: Optional[Dict] = None,
         expires_time: Optional[Union[timedelta,int,bool]] = None,
         audience: Optional[Union[str,Sequence[str]]] = None
-    ) -> bytes:
+    ) -> str:
         """
         Create a refresh token with 30 days for expired time (default),
         info for param and return please check to function create token
@@ -416,7 +413,7 @@ class AuthJWT(AuthConfig):
             return self._verified_token(encoded_token=self._token)
         return None
 
-    def get_jti(self,encoded_token: bytes) -> str:
+    def get_jti(self,encoded_token: str) -> str:
         """
         Returns the JTI (unique identifier) of an encoded JWT
 
@@ -435,7 +432,7 @@ class AuthJWT(AuthConfig):
             return self._verified_token(encoded_token=self._token)['identity']
         return None
 
-    def get_unverified_jwt_headers(self,encoded_token: Optional[bytes] = None) -> dict:
+    def get_unverified_jwt_headers(self,encoded_token: Optional[str] = None) -> dict:
         """
         Returns the Headers of an encoded JWT without verifying the actual signature of JWT
 

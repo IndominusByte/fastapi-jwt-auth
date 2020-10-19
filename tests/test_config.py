@@ -69,7 +69,7 @@ def test_secret_key_not_exist(client,Authorize):
     Authorize._secret_key = None
 
     with pytest.raises(RuntimeError,match=r"AUTHJWT_SECRET_KEY"):
-        client.get('/protected',headers={"Authorization":f"Bearer {token.decode('utf-8')}"})
+        client.get('/protected',headers={"Authorization":f"Bearer {token}"})
 
 def test_blacklist_enabled_without_callback(client):
     # set authjwt_secret_key for create token
@@ -86,7 +86,7 @@ def test_blacklist_enabled_without_callback(client):
 
     token = Authorize.create_access_token(identity='test')
 
-    response = client.get('/protected',headers={"Authorization": f"Bearer {token.decode('utf-8')}"})
+    response = client.get('/protected',headers={"Authorization": f"Bearer {token}"})
     assert response.status_code == 200
 
     class SettingsTwo(BaseSettings):
@@ -99,7 +99,7 @@ def test_blacklist_enabled_without_callback(client):
         return SettingsTwo()
 
     with pytest.raises(RuntimeError,match=r"@AuthJWT.token_in_blacklist_loader"):
-        response = client.get('/protected',headers={"Authorization": f"Bearer {token.decode('utf-8')}"})
+        response = client.get('/protected',headers={"Authorization": f"Bearer {token}"})
 
 def test_load_env_from_outside():
     DIR = os.path.abspath(os.path.dirname(__file__))

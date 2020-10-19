@@ -16,9 +16,11 @@ class AuthConfig:
     _decode_audience = None
     _blacklist_enabled = None
     _blacklist_token_checks = {'access','refresh'}
-    _token_in_blacklist_callback = None
     _header_name = "Authorization"
     _header_type = "Bearer"
+    _token_in_blacklist_callback = None
+    _user_claims_callback = None
+    _user_claims_in_refresh_token = False
     _access_token_expires = timedelta(minutes=15)
     _refresh_token_expires = timedelta(days=30)
 
@@ -53,9 +55,25 @@ class AuthConfig:
         This decorator sets the callback function that will be called when
         a protected endpoint is accessed and will check if the JWT has been
         been revoked. By default, this callback is not used.
+
         *HINT*: The callback must be a function that takes decrypted_token argument,
         args for object AuthJWT and this is not used, decrypted_token is decode
         JWT (python dictionary) and returns *`True`* if the token has been blacklisted,
         or *`False`* otherwise.
         """
         cls._token_in_blacklist_callback = callback
+
+    @classmethod
+    def user_claims_loader(cls, callback: Callable[...,dict]) -> "AuthConfig":
+        """
+        This decorator sets the callback function for adding custom claims to an
+        access token or refresh token (optional in config) when :func:`create_access_token` is
+        called. By default, no extra user claims will be added to the JWT.
+
+        *HINT*: The callback function must be a function that takes only **one** argument,
+        which is the object passed into
+        :func:`create_access_token(identity=<object>)`, and returns the custom
+        claims you want included in the access tokens or refresh token (optional in config).
+        This returned claims must be *JSON serializable*.
+        """
+        cls._user_claims_callback = callback

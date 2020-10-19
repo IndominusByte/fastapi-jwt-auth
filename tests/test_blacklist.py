@@ -66,7 +66,7 @@ def refresh_token(Authorize):
 
 @pytest.mark.parametrize("url",["/jwt-required","/jwt-optional","/fresh-jwt-required"])
 def test_non_blacklisted_access_token(client,url,access_token,Authorize):
-    response = client.get(url,headers={"Authorization":f"Bearer {access_token.decode('utf-8')}"})
+    response = client.get(url,headers={"Authorization":f"Bearer {access_token}"})
     assert response.status_code == 200
     assert response.json() == {'hello':'world'}
 
@@ -77,7 +77,7 @@ def test_non_blacklisted_access_token(client,url,access_token,Authorize):
 
 def test_non_blacklisted_refresh_token(client,refresh_token,Authorize):
     url = '/jwt-refresh-required'
-    response = client.get(url,headers={"Authorization":f"Bearer {refresh_token.decode('utf-8')}"})
+    response = client.get(url,headers={"Authorization":f"Bearer {refresh_token}"})
     assert response.status_code == 200
     assert response.json() == {'hello':'world'}
 
@@ -87,12 +87,12 @@ def test_non_blacklisted_refresh_token(client,refresh_token,Authorize):
 
 @pytest.mark.parametrize("url",["/jwt-required","/jwt-optional","/fresh-jwt-required"])
 def test_blacklisted_access_token(client,url,access_token):
-    response = client.get(url,headers={"Authorization":f"Bearer {access_token.decode('utf-8')}"})
+    response = client.get(url,headers={"Authorization":f"Bearer {access_token}"})
     assert response.status_code == 401
     assert response.json() == {'detail': 'Token has been revoked'}
 
 def test_blacklisted_refresh_token(client,refresh_token):
     url = '/jwt-refresh-required'
-    response = client.get(url,headers={"Authorization":f"Bearer {refresh_token.decode('utf-8')}"})
+    response = client.get(url,headers={"Authorization":f"Bearer {refresh_token}"})
     assert response.status_code == 401
     assert response.json() == {'detail': 'Token has been revoked'}

@@ -61,7 +61,7 @@ def test_header_invalid_jwt(client):
 
 def test_valid_header(client,Authorize):
     token = Authorize.create_access_token(identity='test')
-    response = client.get('/protected',headers={'Authorization':f"Bearer {token.decode('utf-8')}"})
+    response = client.get('/protected',headers={'Authorization':f"Bearer {token}"})
     assert response.status_code == 200
     assert response.json() == {'hello':'world'}
 
@@ -76,10 +76,10 @@ def test_get_jwt_headers_from_request(client, Authorize):
     access_token = Authorize.create_access_token(identity=1,headers={'access':'bar'})
     refresh_token = Authorize.create_refresh_token(identity=2,headers={'refresh':'foo'})
 
-    response = client.get('/get_headers_access',headers={"Authorization":f"Bearer {access_token.decode('utf-8')}"})
+    response = client.get('/get_headers_access',headers={"Authorization":f"Bearer {access_token}"})
     assert response.json()['access'] == 'bar'
 
-    response = client.get('/get_headers_refresh',headers={"Authorization":f"Bearer {refresh_token.decode('utf-8')}"})
+    response = client.get('/get_headers_refresh',headers={"Authorization":f"Bearer {refresh_token}"})
     assert response.json()['refresh'] == 'foo'
 
 def test_custom_header_name(client,Authorize):
@@ -93,12 +93,12 @@ def test_custom_header_name(client,Authorize):
 
     token = Authorize.create_access_token(identity=1)
     # Insure 'default' headers no longer work
-    response = client.get('/protected',headers={"Authorization":f"Bearer {token.decode('utf-8')}"})
+    response = client.get('/protected',headers={"Authorization":f"Bearer {token}"})
     assert response.status_code == 401
     assert response.json() == {'detail': 'Missing Foo Header'}
 
     # Insure new headers do work
-    response = client.get('/protected',headers={"Foo":f"Bearer {token.decode('utf-8')}"})
+    response = client.get('/protected',headers={"Foo":f"Bearer {token}"})
     assert response.status_code == 200
     assert response.json() == {'hello':'world'}
 
@@ -120,11 +120,11 @@ def test_custom_header_type(client,Authorize):
 
     token = Authorize.create_access_token(identity=1)
     # Insure 'default' headers no longer work
-    response = client.get('/protected',headers={"Authorization":f"Bearer {token.decode('utf-8')}"})
+    response = client.get('/protected',headers={"Authorization":f"Bearer {token}"})
     assert response.status_code == 422
     assert response.json() == {'detail': "Bad Authorization header. Expected value 'JWT <JWT>'"}
     # Insure new headers do work
-    response = client.get('/protected',headers={"Authorization":f"JWT {token.decode('utf-8')}"})
+    response = client.get('/protected',headers={"Authorization":f"JWT {token}"})
     assert response.status_code == 200
     assert response.json() == {'hello':'world'}
 
@@ -137,11 +137,11 @@ def test_custom_header_type(client,Authorize):
         return HeaderTypeNone()
 
     # Insure 'JWT' headers no longer work
-    response = client.get('/protected',headers={"Authorization":f"JWT {token.decode('utf-8')}"})
+    response = client.get('/protected',headers={"Authorization":f"JWT {token}"})
     assert response.status_code == 422
     assert response.json() == {'detail': "Bad Authorization header. Expected value '<JWT>'"}
     # Insure new headers without a type also work
-    response = client.get('/protected',headers={"Authorization":f"{token.decode('utf-8')}"})
+    response = client.get('/protected',headers={"Authorization":f"{token}"})
     assert response.status_code == 200
     assert response.json() == {'hello':'world'}
 
