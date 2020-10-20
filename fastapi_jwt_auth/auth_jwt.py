@@ -16,15 +16,15 @@ from fastapi_jwt_auth.exceptions import (
 )
 
 class AuthJWT(AuthConfig):
-    def __init__(self,res: Request):
+    def __init__(self,req: Request):
         """
         Get jwt from header or cookie (development) from an incoming request
 
-        :param res: all incoming request
+        :param req: all incoming request
         :return: None
         """
-        if res:
-            auth = res.headers.get(self._header_name.lower())
+        if req:
+            auth = req.headers.get(self._header_name.lower())
             if auth: self._get_jwt_from_headers(auth)
 
     def _get_jwt_from_headers(self,auth: str) -> "AuthJWT":
