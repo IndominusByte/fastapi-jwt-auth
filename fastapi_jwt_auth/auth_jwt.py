@@ -227,7 +227,7 @@ class AuthJWT(AuthConfig):
         except Exception as err:
             raise JWTDecodeError(status_code=422,message=str(err))
 
-    def has_token_in_denylist_callback(self) -> bool:
+    def _has_token_in_denylist_callback(self) -> bool:
         """
         Return True if token denylist callback set
         """
@@ -242,7 +242,7 @@ class AuthJWT(AuthConfig):
         if not self._denylist_enabled:
             return
 
-        if not self.has_token_in_denylist_callback():
+        if not self._has_token_in_denylist_callback():
             raise RuntimeError("A token_in_denylist_callback must be provided via "
                 "the '@AuthJWT.token_in_denylist_loader' if "
                 "AUTHJWT_DENYLIST_ENABLED is 'True'")
@@ -346,7 +346,7 @@ class AuthJWT(AuthConfig):
         if not self._token:
             raise MissingHeaderError(status_code=401,message="Missing {} Header".format(self._header_name))
 
-        if self.get_raw_jwt()['type'] != 'access':
+        if self._get_type_token() != 'access':
             raise AccessTokenRequired(status_code=422,message="Only access tokens are allowed")
 
     def jwt_optional(self) -> None:
@@ -360,7 +360,7 @@ class AuthJWT(AuthConfig):
         if self._token:
             self._verifying_token(encoded_token=self._token,issuer=self._decode_issuer)
 
-        if self._token and self.get_raw_jwt()['type'] != 'access':
+        if self._token and self._get_type_token() != 'access':
             raise AccessTokenRequired(status_code=422,message="Only access tokens are allowed")
 
     def jwt_refresh_token_required(self) -> None:
@@ -375,7 +375,7 @@ class AuthJWT(AuthConfig):
         if not self._token:
             raise MissingHeaderError(status_code=401,message="Missing {} Header".format(self._header_name))
 
-        if self.get_raw_jwt()['type'] != 'refresh':
+        if self._get_type_token() != 'refresh':
             raise RefreshTokenRequired(status_code=422,message="Only refresh tokens are allowed")
 
     def fresh_jwt_required(self) -> None:
@@ -390,11 +390,17 @@ class AuthJWT(AuthConfig):
         if not self._token:
             raise MissingHeaderError(status_code=401,message="Missing {} Header".format(self._header_name))
 
-        if self.get_raw_jwt()['type'] != 'access':
+        if self._get_type_token() != 'access':
             raise AccessTokenRequired(status_code=422,message="Only access tokens are allowed")
 
-        if not self.get_raw_jwt()['fresh']:
+        if not self._get_fresh_token():
             raise FreshTokenRequired(status_code=401,message="Fresh token required")
+
+    def _get_type_token(self) -> str:
+        return self.get_raw_jwt()['type']
+
+    def _get_fresh_token(self) -> bool:
+        return self.get_raw_jwt()['fresh']
 
     def get_raw_jwt(self) -> Optional[Dict[str,Union[str,int,bool]]]:
         """
