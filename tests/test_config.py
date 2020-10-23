@@ -1,5 +1,4 @@
 import pytest, os, jwt
-from .utils import reset_config
 from fastapi_jwt_auth import AuthJWT
 from fastapi import FastAPI, Depends
 from fastapi.testclient import TestClient
@@ -19,8 +18,10 @@ def client():
     return client
 
 def test_default_config():
-    reset_config()
     assert AuthJWT._token is None
+    assert AuthJWT._token_location == {'headers'}
+    assert AuthJWT._response is None
+    assert AuthJWT._request is None
     assert AuthJWT._secret_key is None
     assert AuthJWT._public_key is None
     assert AuthJWT._private_key is None
@@ -41,6 +42,24 @@ def test_default_config():
 
     assert AuthJWT._refresh_token_expires.__class__ == timedelta
     assert int(AuthJWT._refresh_token_expires.total_seconds()) == 2592000
+    # option for create cookies
+    assert AuthJWT._access_cookie_key == "access_token_cookie"
+    assert AuthJWT._refresh_cookie_key == "refresh_token_cookie"
+    assert AuthJWT._access_cookie_path == "/"
+    assert AuthJWT._refresh_cookie_path == "/"
+    assert AuthJWT._cookie_max_age is None
+    assert AuthJWT._cookie_domain is None
+    assert AuthJWT._cookie_secure is False
+    assert AuthJWT._cookie_samesite == "lax"
+    # option for double submit csrf protection
+    assert AuthJWT._cookie_csrf_protect is True
+    assert AuthJWT._access_csrf_cookie_key == "csrf_access_token"
+    assert AuthJWT._refresh_csrf_cookie_key == "csrf_refresh_token"
+    assert AuthJWT._access_csrf_cookie_path == "/"
+    assert AuthJWT._refresh_csrf_cookie_path == "/"
+    assert AuthJWT._access_csrf_header_name == "X-CSRF-Token"
+    assert AuthJWT._refresh_csrf_header_name == "X-CSRF-Token"
+    assert AuthJWT._csrf_methods == {'POST','PUT','PATCH','DELETE'}
 
 def test_token_expired_false(Authorize):
     class TokenFalse(BaseSettings):
@@ -59,7 +78,7 @@ def test_token_expired_false(Authorize):
     assert 'exp' not in jwt.decode(refresh_token,"testing",algorithms="HS256")
 
 def test_secret_key_not_exist(client,Authorize):
-    reset_config()
+    AuthJWT._secret_key = None
 
     with pytest.raises(RuntimeError,match=r"AUTHJWT_SECRET_KEY"):
         Authorize.create_access_token(identity='test')
@@ -114,6 +133,7 @@ def test_load_env_from_outside():
 
     # correct data
     class Settings(BaseSettings):
+        authjwt_token_location: list = ['cookies']
         authjwt_secret_key: str = "testing"
         authjwt_public_key: str = PUBLIC_KEY
         authjwt_private_key: str = PRIVATE_KEY
@@ -129,11 +149,30 @@ def test_load_env_from_outside():
         authjwt_header_type: Optional[str] = None
         authjwt_access_token_expires: timedelta = timedelta(minutes=2)
         authjwt_refresh_token_expires: timedelta = timedelta(days=5)
+        # option for create cookies
+        authjwt_access_cookie_key: str = "access_cookie"
+        authjwt_refresh_cookie_key: str = "refresh_cookie"
+        authjwt_access_cookie_path: str = "/access-cookie"
+        authjwt_refresh_cookie_path: str = "/refresh-cookie"
+        authjwt_cookie_max_age: int = 90
+        authjwt_cookie_domain: str = "example.com"
+        authjwt_cookie_secure: bool = True
+        authjwt_cookie_samesite: str = "strict"
+        # option for double submit csrf protection
+        authjwt_cookie_csrf_protect: bool = False
+        authjwt_access_csrf_cookie_key: str = "csrf_access"
+        authjwt_refresh_csrf_cookie_key: str = "csrf_refresh"
+        authjwt_access_csrf_cookie_path: str = "/access-csrf"
+        authjwt_refresh_csrf_cookie_path: str = "/refresh-csrf"
+        authjwt_access_csrf_header_name: str = "ACCESS-CSRF-Token"
+        authjwt_refresh_csrf_header_name: str = "REFRESH-CSRF-Token"
+        authjwt_csrf_methods: list = ['post']
 
     @AuthJWT.load_config
     def get_valid_settings():
         return Settings()
 
+    assert AuthJWT._token_location == ['cookies']
     assert AuthJWT._secret_key == "testing"
     assert AuthJWT._public_key == PUBLIC_KEY
     assert AuthJWT._private_key == PRIVATE_KEY
@@ -149,100 +188,213 @@ def test_load_env_from_outside():
     assert AuthJWT._header_type is None
     assert AuthJWT._access_token_expires == timedelta(minutes=2)
     assert AuthJWT._refresh_token_expires == timedelta(days=5)
+    # option for create cookies
+    assert AuthJWT._access_cookie_key == "access_cookie"
+    assert AuthJWT._refresh_cookie_key == "refresh_cookie"
+    assert AuthJWT._access_cookie_path == "/access-cookie"
+    assert AuthJWT._refresh_cookie_path == "/refresh-cookie"
+    assert AuthJWT._cookie_max_age == 90
+    assert AuthJWT._cookie_domain == "example.com"
+    assert AuthJWT._cookie_secure is True
+    assert AuthJWT._cookie_samesite == "strict"
+    # option for double submit csrf protection
+    assert AuthJWT._cookie_csrf_protect is False
+    assert AuthJWT._access_csrf_cookie_key == "csrf_access"
+    assert AuthJWT._refresh_csrf_cookie_key == "csrf_refresh"
+    assert AuthJWT._access_csrf_cookie_path == "/access-csrf"
+    assert AuthJWT._refresh_csrf_cookie_path == "/refresh-csrf"
+    assert AuthJWT._access_csrf_header_name == "ACCESS-CSRF-Token"
+    assert AuthJWT._refresh_csrf_header_name == "REFRESH-CSRF-Token"
+    assert AuthJWT._csrf_methods == ['POST']
 
     with pytest.raises(TypeError,match=r"Config"):
         @AuthJWT.load_config
         def invalid_data():
             return "test"
 
-    with pytest.raises(ValidationError,match=r"AUTHJWT_SECRET_KEY"):
+    with pytest.raises(ValidationError,match=r"authjwt_token_location"):
+        @AuthJWT.load_config
+        def get_invalid_token_location_type():
+            return [("authjwt_token_location",1)]
+
+    with pytest.raises(ValidationError,match=r"authjwt_token_location"):
+        @AuthJWT.load_config
+        def get_invalid_token_location_value():
+            return [("authjwt_token_location",{"headers","cookie"})]
+
+    with pytest.raises(ValidationError,match=r"authjwt_secret_key"):
         @AuthJWT.load_config
         def get_invalid_secret_key():
             return [("authjwt_secret_key",123)]
 
-    with pytest.raises(ValidationError,match=r"AUTHJWT_PUBLIC_KEY"):
+    with pytest.raises(ValidationError,match=r"authjwt_public_key"):
         @AuthJWT.load_config
         def get_invalid_public_key():
             return [("authjwt_public_key",123)]
 
-    with pytest.raises(ValidationError,match=r"AUTHJWT_PRIVATE_KEY"):
+    with pytest.raises(ValidationError,match=r"authjwt_private_key"):
         @AuthJWT.load_config
         def get_invalid_private_key():
             return [("authjwt_private_key",123)]
 
-    with pytest.raises(ValidationError,match=r"AUTHJWT_ALGORITHM"):
+    with pytest.raises(ValidationError,match=r"authjwt_algorithm"):
         @AuthJWT.load_config
         def get_invalid_algorithm():
             return [("authjwt_algorithm",123)]
 
-    with pytest.raises(ValidationError,match=r"AUTHJWT_DECODE_ALGORITHMS"):
+    with pytest.raises(ValidationError,match=r"authjwt_decode_algorithms"):
         @AuthJWT.load_config
         def get_invalid_decode_algorithms():
             return [("authjwt_decode_algorithms","test")]
 
-    with pytest.raises(ValidationError,match=r"AUTHJWT_DECODE_LEEWAY"):
+    with pytest.raises(ValidationError,match=r"authjwt_decode_leeway"):
         @AuthJWT.load_config
         def get_invalid_decode_leeway():
             return [("authjwt_decode_leeway","test")]
 
-    with pytest.raises(ValidationError,match=r"AUTHJWT_ENCODE_ISSUER"):
+    with pytest.raises(ValidationError,match=r"authjwt_encode_issuer"):
         @AuthJWT.load_config
         def get_invalid_encode_issuer():
             return [("authjwt_encode_issuer",1)]
 
-    with pytest.raises(ValidationError,match=r"AUTHJWT_DECODE_ISSUER"):
+    with pytest.raises(ValidationError,match=r"authjwt_decode_issuer"):
         @AuthJWT.load_config
         def get_invalid_decode_issuer():
             return [("authjwt_decode_issuer",1)]
 
-    with pytest.raises(ValidationError,match=r"AUTHJWT_DECODE_AUDIENCE"):
+    with pytest.raises(ValidationError,match=r"authjwt_decode_audience"):
         @AuthJWT.load_config
         def get_invalid_decode_audience():
             return [("authjwt_decode_audience",1)]
 
-    with pytest.raises(ValidationError,match=r"AUTHJWT_DENYLIST_ENABLED"):
+    with pytest.raises(ValidationError,match=r"authjwt_denylist_enabled"):
         @AuthJWT.load_config
         def get_invalid_denylist():
             return [("authjwt_denylist_enabled","test")]
 
-    with pytest.raises(ValidationError,match=r"AUTHJWT_DENYLIST_TOKEN_CHECKS"):
+    with pytest.raises(ValidationError,match=r"authjwt_denylist_token_checks"):
         @AuthJWT.load_config
         def get_invalid_denylist_token_checks():
             return [("authjwt_denylist_token_checks","string")]
 
-    with pytest.raises(ValidationError,match=r"AUTHJWT_DENYLIST_TOKEN_CHECKS"):
+    with pytest.raises(ValidationError,match=r"authjwt_denylist_token_checks"):
         @AuthJWT.load_config
         def get_invalid_denylist_str_token_check():
             return [("authjwt_denylist_token_checks",['access','refreshh'])]
 
-    with pytest.raises(ValidationError,match=r"AUTHJWT_HEADER_NAME"):
+    with pytest.raises(ValidationError,match=r"authjwt_header_name"):
         @AuthJWT.load_config
         def get_invalid_header_name():
             return [("authjwt_header_name",1)]
 
-    with pytest.raises(ValidationError,match=r"AUTHJWT_HEADER_TYPE"):
+    with pytest.raises(ValidationError,match=r"authjwt_header_type"):
         @AuthJWT.load_config
         def get_invalid_header_type():
             return [("authjwt_header_type",1)]
 
-    with pytest.raises(ValidationError,match=r"AUTHJWT_ACCESS_TOKEN_EXPIRES"):
+    with pytest.raises(ValidationError,match=r"authjwt_access_token_expires"):
         @AuthJWT.load_config
         def get_invalid_access_token():
             return [("authjwt_access_token_expires","lol")]
 
-    with pytest.raises(ValidationError,match=r"AUTHJWT_ACCESS_TOKEN_EXPIRES"):
+    with pytest.raises(ValidationError,match=r"authjwt_access_token_expires"):
         @AuthJWT.load_config
         def get_access_token_true_value():
             return [("authjwt_access_token_expires",True)]
 
-    with pytest.raises(ValidationError,match=r"AUTHJWT_REFRESH_TOKEN_EXPIRES"):
+    with pytest.raises(ValidationError,match=r"authjwt_refresh_token_expires"):
         @AuthJWT.load_config
         def get_invalid_refresh_token():
             return [("authjwt_refresh_token_expires","lol")]
 
-    with pytest.raises(ValidationError,match=r"AUTHJWT_REFRESH_TOKEN_EXPIRES"):
+    with pytest.raises(ValidationError,match=r"authjwt_refresh_token_expires"):
         @AuthJWT.load_config
         def get_refresh_token_true_value():
             return [("authjwt_refresh_token_expires",True)]
 
-    reset_config()
+    # option for create cookies
+    with pytest.raises(ValidationError,match=r"authjwt_access_cookie_key"):
+        @AuthJWT.load_config
+        def get_invalid_access_cookie_key():
+            return [("authjwt_access_cookie_key",1)]
+
+    with pytest.raises(ValidationError,match=r"authjwt_refresh_cookie_key"):
+        @AuthJWT.load_config
+        def get_invalid_refresh_cookie_key():
+            return [("authjwt_refresh_cookie_key",1)]
+
+    with pytest.raises(ValidationError,match=r"authjwt_access_cookie_path"):
+        @AuthJWT.load_config
+        def get_invalid_access_cookie_path():
+            return [("authjwt_access_cookie_path",1)]
+
+    with pytest.raises(ValidationError,match=r"authjwt_refresh_cookie_path"):
+        @AuthJWT.load_config
+        def get_invalid_refresh_cookie_path():
+            return [("authjwt_refresh_cookie_path",1)]
+
+    with pytest.raises(ValidationError,match=r"authjwt_cookie_max_age"):
+        @AuthJWT.load_config
+        def get_invalid_cookie_max_age():
+            return [("authjwt_cookie_max_age","string")]
+
+    with pytest.raises(ValidationError,match=r"authjwt_cookie_domain"):
+        @AuthJWT.load_config
+        def get_invalid_cookie_domain():
+            return [("authjwt_cookie_domain",1)]
+
+    with pytest.raises(ValidationError,match=r"authjwt_cookie_secure"):
+        @AuthJWT.load_config
+        def get_invalid_cookie_secure():
+            return [("authjwt_cookie_secure","string")]
+
+    with pytest.raises(ValidationError,match=r"authjwt_cookie_samesite"):
+        @AuthJWT.load_config
+        def get_invalid_cookie_samesite_type():
+            return [("authjwt_cookie_samesite",1)]
+
+    with pytest.raises(ValidationError,match=r"authjwt_cookie_samesite"):
+        @AuthJWT.load_config
+        def get_invalid_cookie_samesite_value():
+            return [("authjwt_cookie_samesite","laxx")]
+
+    # option for double submit csrf protection
+    with pytest.raises(ValidationError,match=r"authjwt_cookie_csrf_protect"):
+        @AuthJWT.load_config
+        def get_invalid_cookie_csrf_protect():
+            return [("authjwt_cookie_csrf_protect",1)]
+
+    with pytest.raises(ValidationError,match=r"authjwt_access_csrf_cookie_key"):
+        @AuthJWT.load_config
+        def get_invalid_access_csrf_cookie_key():
+            return [("authjwt_access_csrf_cookie_key",1)]
+
+    with pytest.raises(ValidationError,match=r"authjwt_refresh_csrf_cookie_key"):
+        @AuthJWT.load_config
+        def get_invalid_refresh_csrf_cookie_key():
+            return [("authjwt_refresh_csrf_cookie_key",1)]
+
+    with pytest.raises(ValidationError,match=r"authjwt_access_csrf_cookie_path"):
+        @AuthJWT.load_config
+        def get_invalid_access_csrf_cookie_path():
+            return [("authjwt_access_csrf_cookie_path",1)]
+
+    with pytest.raises(ValidationError,match=r"authjwt_refresh_csrf_cookie_path"):
+        @AuthJWT.load_config
+        def get_invalid_refresh_csrf_cookie_path():
+            return [("authjwt_refresh_csrf_cookie_path",1)]
+
+    with pytest.raises(ValidationError,match=r"authjwt_access_csrf_header_name"):
+        @AuthJWT.load_config
+        def get_invalid_access_csrf_header_name():
+            return [("authjwt_access_csrf_header_name",1)]
+
+    with pytest.raises(ValidationError,match=r"authjwt_refresh_csrf_header_name"):
+        @AuthJWT.load_config
+        def get_invalid_refresh_csrf_header_name():
+            return [("authjwt_refresh_csrf_header_name",1)]
+
+    with pytest.raises(ValidationError,match=r"authjwt_csrf_methods"):
+        @AuthJWT.load_config
+        def get_invalid_csrf_methods():
+            return [("authjwt_csrf_methods",[1,2,3])]

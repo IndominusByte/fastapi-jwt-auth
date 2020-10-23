@@ -59,6 +59,7 @@ class AuthConfig:
         try:
             config = LoadConfig(**{key.lower():value for key,value in settings()})
 
+            cls._token_location = config.authjwt_token_location
             cls._secret_key = config.authjwt_secret_key
             cls._public_key = config.authjwt_public_key
             cls._private_key = config.authjwt_private_key
@@ -74,6 +75,24 @@ class AuthConfig:
             cls._header_type = config.authjwt_header_type
             cls._access_token_expires = config.authjwt_access_token_expires
             cls._refresh_token_expires = config.authjwt_refresh_token_expires
+            # option for create cookies
+            cls._access_cookie_key = config.authjwt_access_cookie_key
+            cls._refresh_cookie_key = config.authjwt_refresh_cookie_key
+            cls._access_cookie_path = config.authjwt_access_cookie_path
+            cls._refresh_cookie_path = config.authjwt_refresh_cookie_path
+            cls._cookie_max_age = config.authjwt_cookie_max_age
+            cls._cookie_domain = config.authjwt_cookie_domain
+            cls._cookie_secure = config.authjwt_cookie_secure
+            cls._cookie_samesite = config.authjwt_cookie_samesite
+            # option for double submit csrf protection
+            cls._cookie_csrf_protect = config.authjwt_cookie_csrf_protect
+            cls._access_csrf_cookie_key = config.authjwt_access_csrf_cookie_key
+            cls._refresh_csrf_cookie_key = config.authjwt_refresh_csrf_cookie_key
+            cls._access_csrf_cookie_path = config.authjwt_access_csrf_cookie_path
+            cls._refresh_csrf_cookie_path = config.authjwt_refresh_csrf_cookie_path
+            cls._access_csrf_header_name = config.authjwt_access_csrf_header_name
+            cls._refresh_csrf_header_name = config.authjwt_refresh_csrf_header_name
+            cls._csrf_methods = config.authjwt_csrf_methods
         except ValidationError:
             raise
         except Exception:
