@@ -5,6 +5,10 @@ from datetime import timedelta
 
 class AuthConfig:
     _token = None
+    _token_location = {'headers'}
+    _response = None
+    _request = None
+
     _secret_key = None
     _public_key = None
     _private_key = None
@@ -21,6 +25,34 @@ class AuthConfig:
     _token_in_denylist_callback = None
     _access_token_expires = timedelta(minutes=15)
     _refresh_token_expires = timedelta(days=30)
+
+    # option for create cookies
+    _access_cookie_key = "access_token_cookie"
+    _refresh_cookie_key = "refresh_token_cookie"
+    _access_cookie_path = "/"
+    _refresh_cookie_path = "/"
+    _cookie_max_age = None
+    _cookie_domain = None
+    _cookie_secure = False
+    _cookie_samesite = "lax"
+
+    # option for double submit csrf protection
+    _cookie_csrf_protect = True
+    _access_csrf_cookie_key = "csrf_access_token"
+    _refresh_csrf_cookie_key = "csrf_refresh_token"
+    _access_csrf_cookie_path = "/"
+    _refresh_csrf_cookie_path = "/"
+    _access_csrf_header_name = "X-CSRF-Token"
+    _refresh_csrf_header_name = "X-CSRF-Token"
+    _csrf_methods = {'POST','PUT','PATCH','DELETE'}
+
+    @property
+    def jwt_in_cookies(self) -> bool:
+        return 'cookies' in self._token_location
+
+    @property
+    def jwt_in_headers(self) -> bool:
+        return 'headers' in self._token_location
 
     @classmethod
     def load_config(cls, settings: Callable[...,List[tuple]]) -> "AuthConfig":

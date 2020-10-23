@@ -20,9 +20,25 @@ class MissingHeaderError(AuthJWTException):
         self.status_code = status_code
         self.message = message
 
+class MissingCookieError(AuthJWTException):
+    """
+    Error raised when token not found in cookie
+    """
+    def __init__(self,status_code: int, message: str):
+        self.status_code = status_code
+        self.message = message
+
 class JWTDecodeError(AuthJWTException):
     """
     An error decoding a JWT
+    """
+    def __init__(self,status_code: int, message: str):
+        self.status_code = status_code
+        self.message = message
+
+class CSRFError(AuthJWTException):
+    """
+    An error with CSRF protection
     """
     def __init__(self,status_code: int, message: str):
         self.status_code = status_code
@@ -47,7 +63,7 @@ class AccessTokenRequired(AuthJWTException):
 
 class RefreshTokenRequired(AuthJWTException):
     """
-    Error raised when a valid, non-access JWT attempt to access an endpoint
+    Error raised when a valid, non-refresh JWT attempt to access an endpoint
     protected by jwt_refresh_token_required
     """
     def __init__(self,status_code: int, message: str):

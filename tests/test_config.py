@@ -82,7 +82,7 @@ def test_denylist_enabled_without_callback(client):
     def get_settings_one():
         return SettingsOne()
 
-    Authorize = AuthJWT(None)
+    Authorize = AuthJWT()
 
     token = Authorize.create_access_token(identity='test')
 
