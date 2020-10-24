@@ -33,7 +33,7 @@ class LoadConfig(BaseModel):
     authjwt_cookie_max_age: Optional[StrictInt] = None
     authjwt_cookie_domain: Optional[StrictStr] = None
     authjwt_cookie_secure: Optional[StrictBool] = False
-    authjwt_cookie_samesite: Optional[StrictStr] = "lax"
+    authjwt_cookie_samesite: Optional[StrictStr] = None
     # option for double submit csrf protection
     authjwt_cookie_csrf_protect: Optional[StrictBool] = True
     authjwt_access_csrf_cookie_key: Optional[StrictStr] = "csrf_access_token"

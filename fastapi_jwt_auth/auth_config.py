@@ -34,7 +34,7 @@ class AuthConfig:
     _cookie_max_age = None
     _cookie_domain = None
     _cookie_secure = False
-    _cookie_samesite = "lax"
+    _cookie_samesite = None
 
     # option for double submit csrf protection
     _cookie_csrf_protect = True

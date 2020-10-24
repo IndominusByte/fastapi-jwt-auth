@@ -50,7 +50,7 @@ def test_default_config():
     assert AuthJWT._cookie_max_age is None
     assert AuthJWT._cookie_domain is None
     assert AuthJWT._cookie_secure is False
-    assert AuthJWT._cookie_samesite == "lax"
+    assert AuthJWT._cookie_samesite is None
     # option for double submit csrf protection
     assert AuthJWT._cookie_csrf_protect is True
     assert AuthJWT._access_csrf_cookie_key == "csrf_access_token"
