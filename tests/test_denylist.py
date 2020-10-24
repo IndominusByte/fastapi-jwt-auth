@@ -51,11 +51,11 @@ def client():
 
 @pytest.fixture(scope='module')
 def access_token(Authorize):
-    return Authorize.create_access_token(identity='test',fresh=True)
+    return Authorize.create_access_token(subject='test',fresh=True)
 
 @pytest.fixture(scope='module')
 def refresh_token(Authorize):
-    return Authorize.create_refresh_token(identity='test')
+    return Authorize.create_refresh_token(subject='test')
 
 @pytest.mark.parametrize("url",["/jwt-required","/jwt-optional","/fresh-jwt-required"])
 def test_non_denylisted_access_token(client,url,access_token,Authorize):

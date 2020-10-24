@@ -120,7 +120,7 @@ class AuthJWT(AuthConfig):
 
     def _create_token(
         self,
-        identity: Union[str,int],
+        subject: Union[str,int],
         type_token: str,
         exp_time: Optional[int],
         fresh: Optional[bool] = False,
@@ -132,7 +132,7 @@ class AuthJWT(AuthConfig):
         """
         Create token for access_token and refresh_token (utf-8)
 
-        :param identity: Identifier for who this token is for example id or username from database.
+        :param subject: Identifier for who this token is for example id or username from database.
         :param type_token: indicate token is access_token or refresh_token
         :param exp_time: Set the duration of the JWT
         :param fresh: Optional when token is access_token this param required
@@ -144,8 +144,8 @@ class AuthJWT(AuthConfig):
         :return: Encoded token
         """
         # Validation type data
-        if not isinstance(identity, (str,int)):
-            raise TypeError("identity must be a string or integer")
+        if not isinstance(subject, (str,int)):
+            raise TypeError("subject must be a string or integer")
         if not isinstance(fresh, (bool)):
             raise TypeError("fresh must be a boolean")
         if audience and not isinstance(audience, (str, list, tuple, set, frozenset, GeneratorType)):
@@ -155,15 +155,13 @@ class AuthJWT(AuthConfig):
 
         # Data section
         reserved_claims = {
+            "sub": subject,
             "iat": self._get_int_from_datetime(datetime.now(timezone.utc)),
             "nbf": self._get_int_from_datetime(datetime.now(timezone.utc)),
-            "jti": self._get_jwt_identifier(),
+            "jti": self._get_jwt_identifier()
         }
 
-        custom_claims = {
-            "identity": identity,
-            "type": type_token
-        }
+        custom_claims = {"type": type_token}
 
         # for access_token only fresh needed
         if type_token == 'access':
@@ -253,7 +251,7 @@ class AuthJWT(AuthConfig):
 
     def create_access_token(
         self,
-        identity: Union[str,int],
+        subject: Union[str,int],
         fresh: Optional[bool] = False,
         algorithm: Optional[str] = None,
         headers: Optional[Dict] = None,
@@ -267,7 +265,7 @@ class AuthJWT(AuthConfig):
         :return: hash token
         """
         return self._create_token(
-            identity=identity,
+            subject=subject,
             type_token="access",
             exp_time=self._get_expired_time("access",expires_time),
             fresh=fresh,
@@ -279,7 +277,7 @@ class AuthJWT(AuthConfig):
 
     def create_refresh_token(
         self,
-        identity: Union[str,int],
+        subject: Union[str,int],
         algorithm: Optional[str] = None,
         headers: Optional[Dict] = None,
         expires_time: Optional[Union[timedelta,int,bool]] = None,
@@ -292,7 +290,7 @@ class AuthJWT(AuthConfig):
         :return: hash token
         """
         return self._create_token(
-            identity=identity,
+            subject=subject,
             type_token="refresh",
             exp_time=self._get_expired_time("refresh",expires_time),
             algorithm=algorithm,
@@ -634,9 +632,9 @@ class AuthJWT(AuthConfig):
 
     def jwt_optional(self) -> None:
         """
-        If an access token in present in the request you can get data from get_raw_jwt() or get_jwt_identity(),
+        If an access token in present in the request you can get data from get_raw_jwt() or get_jwt_subject(),
         If no access token is present in the request, this endpoint will still be called, but
-        get_raw_jwt() or get_jwt_identity() will return None
+        get_raw_jwt() or get_jwt_subject() will return None
         """
         if len(self._token_location) == 2:
             if self._token and self.jwt_in_headers:
@@ -698,15 +696,15 @@ class AuthJWT(AuthConfig):
         """
         return self._verified_token(encoded_token)['jti']
 
-    def get_jwt_identity(self) -> Optional[Union[str,int]]:
+    def get_jwt_subject(self) -> Optional[Union[str,int]]:
         """
-        this will return the identity of the JWT that is accessing this endpoint.
+        this will return the subject of the JWT that is accessing this endpoint.
         If no JWT is present, `None` is returned instead.
 
-        :return: identity of JWT
+        :return: sub of JWT
         """
         if self._token:
-            return self._verified_token(self._token)['identity']
+            return self._verified_token(self._token)['sub']
         return None
 
     def get_unverified_jwt_headers(self,encoded_token: Optional[str] = None) -> dict:

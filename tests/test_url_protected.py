@@ -24,7 +24,7 @@ def client():
     @app.get('/jwt-optional')
     def jwt_optional(Authorize: AuthJWT = Depends()):
         Authorize.jwt_optional()
-        if Authorize.get_jwt_identity():
+        if Authorize.get_jwt_subject():
             return {'hello':'world'}
         return {'hello':'anonym'}
 
@@ -49,14 +49,14 @@ def test_missing_header(client,url):
 
 @pytest.mark.parametrize("url",["/jwt-required","/jwt-optional","/fresh-jwt-required"])
 def test_only_access_token_allowed(client,url,Authorize):
-    token = Authorize.create_refresh_token(identity='test')
+    token = Authorize.create_refresh_token(subject='test')
     response = client.get(url,headers={"Authorization":f"Bearer {token}"})
     assert response.status_code == 422
     assert response.json() == {'detail': 'Only access tokens are allowed'}
 
 def test_jwt_required(client,Authorize):
     url = '/jwt-required'
-    token = Authorize.create_access_token(identity='test')
+    token = Authorize.create_access_token(subject='test')
     response = client.get(url,headers={"Authorization":f"Bearer {token}"})
     assert response.status_code == 200
     assert response.json() == {'hello':'world'}
@@ -68,7 +68,7 @@ def test_jwt_optional(client,Authorize):
     assert response.status_code == 200
     assert response.json() == {'hello': 'anonym'}
 
-    token = Authorize.create_access_token(identity='test')
+    token = Authorize.create_access_token(subject='test')
     response = client.get(url,headers={"Authorization":f"Bearer {token}"})
     assert response.status_code == 200
     assert response.json() == {'hello': 'world'}
@@ -76,12 +76,12 @@ def test_jwt_optional(client,Authorize):
 def test_refresh_required(client,Authorize):
     url = '/jwt-refresh-required'
     # only refresh token allowed
-    token = Authorize.create_access_token(identity='test')
+    token = Authorize.create_access_token(subject='test')
     response = client.get(url,headers={"Authorization":f"Bearer {token}"})
     assert response.status_code == 422
     assert response.json() == {'detail': 'Only refresh tokens are allowed'}
 
-    token = Authorize.create_refresh_token(identity='test')
+    token = Authorize.create_refresh_token(subject='test')
     response = client.get(url,headers={"Authorization":f"Bearer {token}"})
     assert response.status_code == 200
     assert response.json() == {'hello':'world'}
@@ -89,12 +89,12 @@ def test_refresh_required(client,Authorize):
 def test_fresh_jwt_required(client,Authorize):
     url = '/fresh-jwt-required'
     # only fresh token allowed
-    token = Authorize.create_access_token(identity='test')
+    token = Authorize.create_access_token(subject='test')
     response = client.get(url,headers={"Authorization":f"Bearer {token}"})
     assert response.status_code == 401
     assert response.json() == {'detail': 'Fresh token required'}
 
-    token = Authorize.create_access_token(identity='test',fresh=True)
+    token = Authorize.create_access_token(subject='test',fresh=True)
     response = client.get(url,headers={"Authorization":f"Bearer {token}"})
     assert response.status_code == 200
     assert response.json() == {'hello':'world'}
