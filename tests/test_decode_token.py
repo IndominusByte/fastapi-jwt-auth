@@ -241,7 +241,7 @@ def test_invalid_asymmetric_algorithms(client,Authorize):
     def get_settings_asymmetric_one():
         return SettingsAsymmetricOne()
 
-    with pytest.raises(RuntimeError,match=r"AUTHJWT_PRIVATE_KEY"):
+    with pytest.raises(RuntimeError,match=r"authjwt_private_key"):
         Authorize.create_access_token(subject=1)
 
     DIR = os.path.abspath(os.path.dirname(__file__))
@@ -259,7 +259,7 @@ def test_invalid_asymmetric_algorithms(client,Authorize):
         return SettingsAsymmetricTwo()
 
     token = Authorize.create_access_token(subject=1)
-    with pytest.raises(RuntimeError,match=r"AUTHJWT_PUBLIC_KEY"):
+    with pytest.raises(RuntimeError,match=r"authjwt_public_key"):
         client.get('/protected',headers={'Authorization':f"Bearer {token}"})
 
     AuthJWT._private_key = None

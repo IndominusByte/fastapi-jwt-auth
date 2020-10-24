@@ -80,14 +80,14 @@ def test_token_expired_false(Authorize):
 def test_secret_key_not_exist(client,Authorize):
     AuthJWT._secret_key = None
 
-    with pytest.raises(RuntimeError,match=r"AUTHJWT_SECRET_KEY"):
+    with pytest.raises(RuntimeError,match=r"authjwt_secret_key"):
         Authorize.create_access_token(subject='test')
 
     Authorize._secret_key = "secret"
     token = Authorize.create_access_token(subject=1)
     Authorize._secret_key = None
 
-    with pytest.raises(RuntimeError,match=r"AUTHJWT_SECRET_KEY"):
+    with pytest.raises(RuntimeError,match=r"authjwt_secret_key"):
         client.get('/protected',headers={"Authorization":f"Bearer {token}"})
 
 def test_denylist_enabled_without_callback(client):
@@ -398,3 +398,8 @@ def test_load_env_from_outside():
         @AuthJWT.load_config
         def get_invalid_csrf_methods():
             return [("authjwt_csrf_methods",[1,2,3])]
+
+    with pytest.raises(ValidationError,match=r"authjwt_csrf_methods"):
+        @AuthJWT.load_config
+        def get_invalid_csrf_methods_value():
+            return [("authjwt_csrf_methods",['posts'])]

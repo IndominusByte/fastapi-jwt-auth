@@ -76,6 +76,8 @@ class LoadConfig(BaseModel):
 
     @validator('authjwt_csrf_methods', each_item=True)
     def validate_csrf_methods(cls, v):
+        if v.upper() not in {"GET", "HEAD", "POST", "PUT", "DELETE", "PATCH"}:
+            raise ValueError("The 'authjwt_csrf_methods' must be between http request methods")
         return v.upper()
 
     class Config:

@@ -92,7 +92,7 @@ class AuthJWT(AuthConfig):
         if algorithm in symmetric_algorithms:
             if not self._secret_key:
                 raise RuntimeError(
-                    "AUTHJWT_SECRET_KEY must be set when using symmetric algorithm {}".format(algorithm)
+                    "authjwt_secret_key must be set when using symmetric algorithm {}".format(algorithm)
                 )
 
             return self._secret_key
@@ -105,7 +105,7 @@ class AuthJWT(AuthConfig):
         if process == "encode":
             if not self._private_key:
                 raise RuntimeError(
-                    "AUTHJWT_PRIVATE_KEY must be set when using asymmetric algorithm {}".format(algorithm)
+                    "authjwt_private_key must be set when using asymmetric algorithm {}".format(algorithm)
                 )
 
             return self._private_key
@@ -113,7 +113,7 @@ class AuthJWT(AuthConfig):
         if process == "decode":
             if not self._public_key:
                 raise RuntimeError(
-                    "AUTHJWT_PUBLIC_KEY must be set when using asymmetric algorithm {}".format(algorithm)
+                    "authjwt_public_key must be set when using asymmetric algorithm {}".format(algorithm)
                 )
 
             return self._public_key
@@ -209,7 +209,7 @@ class AuthJWT(AuthConfig):
         if not self._has_token_in_denylist_callback():
             raise RuntimeError("A token_in_denylist_callback must be provided via "
                 "the '@AuthJWT.token_in_denylist_loader' if "
-                "AUTHJWT_DENYLIST_ENABLED is 'True'")
+                "authjwt_denylist_enabled is 'True'")
 
         if self._token_in_denylist_callback.__func__(raw_token):
             raise RevokedTokenError(status_code=401,message="Token has been revoked")
@@ -317,7 +317,7 @@ class AuthJWT(AuthConfig):
         """
         if not self.jwt_in_cookies:
             raise RuntimeWarning(
-                "set_access_cookies() called without 'AUTHJWT_TOKEN_LOCATION' configured to use cookies"
+                "set_access_cookies() called without 'authjwt_token_location' configured to use cookies"
             )
 
         if max_age and not isinstance(max_age,int):
@@ -358,7 +358,7 @@ class AuthJWT(AuthConfig):
         """
         if not self.jwt_in_cookies:
             raise RuntimeWarning(
-                "set_refresh_cookies() called without 'AUTHJWT_TOKEN_LOCATION' configured to use cookies"
+                "set_refresh_cookies() called without 'authjwt_token_location' configured to use cookies"
             )
 
         if max_age and not isinstance(max_age,int):
@@ -402,7 +402,7 @@ class AuthJWT(AuthConfig):
         """
         if not self.jwt_in_cookies:
             raise RuntimeWarning(
-                "unset_access_cookies() called without 'AUTHJWT_TOKEN_LOCATION' configured to use cookies"
+                "unset_access_cookies() called without 'authjwt_token_location' configured to use cookies"
             )
 
         self._response.delete_cookie(
@@ -424,7 +424,7 @@ class AuthJWT(AuthConfig):
         """
         if not self.jwt_in_cookies:
             raise RuntimeWarning(
-                "unset_refresh_cookies() called without 'AUTHJWT_TOKEN_LOCATION' configured to use cookies"
+                "unset_refresh_cookies() called without 'authjwt_token_location' configured to use cookies"
             )
 
         self._response.delete_cookie(
