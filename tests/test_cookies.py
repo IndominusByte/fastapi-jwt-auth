@@ -289,12 +289,11 @@ def test_cookie_protected(url,client):
 
     if url != "/jwt-refresh":
         response = client.post(url,headers={"X-CSRF-Access": csrf_access})
-        assert response.status_code == 200
-        assert response.json() == {'hello': 1}
     else:
         response = client.post(url,headers={"X-CSRF-Refresh": csrf_refresh})
-        assert response.status_code == 200
-        assert response.json() == {'hello': 1}
+
+    assert response.status_code == 200
+    assert response.json() == {'hello': 1}
 
     # missing csrf token
     response = client.post(url)
