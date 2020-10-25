@@ -18,7 +18,7 @@ def client():
 
     @app.get('/all-token')
     def all_token(Authorize: AuthJWT = Depends()):
-        access_token = Authorize.create_access_token(subject=1)
+        access_token = Authorize.create_access_token(subject=1,fresh=True)
         refresh_token = Authorize.create_refresh_token(subject=1)
         Authorize.set_access_cookies(access_token)
         Authorize.set_refresh_cookies(refresh_token)
@@ -44,16 +44,29 @@ def client():
     @app.get('/unset-access-token')
     def unset_access_token(Authorize: AuthJWT = Depends()):
         Authorize.unset_access_cookies()
-        return {"msg":"unset access token"}
 
     @app.get('/unset-refresh-token')
     def unset_refresh_token(Authorize: AuthJWT = Depends()):
         Authorize.unset_refresh_cookies()
-        return {"msg":"unset refresh token"}
 
     @app.post('/jwt-optional')
     def jwt_optional(Authorize: AuthJWT = Depends()):
         Authorize.jwt_optional()
+        return {"hello": Authorize.get_jwt_subject()}
+
+    @app.post('/jwt-required')
+    def jwt_required(Authorize: AuthJWT = Depends()):
+        Authorize.jwt_required()
+        return {"hello": Authorize.get_jwt_subject()}
+
+    @app.post('/jwt-refresh')
+    def jwt_refresh(Authorize: AuthJWT = Depends()):
+        Authorize.jwt_refresh_token_required()
+        return {"hello": Authorize.get_jwt_subject()}
+
+    @app.post('/jwt-fresh')
+    def jwt_fresh(Authorize: AuthJWT = Depends()):
+        Authorize.fresh_jwt_required()
         return {"hello": Authorize.get_jwt_subject()}
 
     client = TestClient(app)
@@ -251,6 +264,106 @@ def test_cookie_optional_protected(client):
     res = client.get('/access-token')
     csrf_token = res.cookies.get("csrf_access_token")
 
+    # valid request
     response = client.post(url,headers={"X-CSRF": csrf_token})
+    assert response.status_code == 200
+    assert response.json() == {'hello': 1}
+
+@pytest.mark.parametrize("url",["/jwt-required","/jwt-refresh","/jwt-fresh"])
+def test_cookie_protected(url,client):
+    # custom csrf header name and cookie key
+    @AuthJWT.load_config
+    def custom_header_name_cookie_key():
+        return [
+            ("authjwt_token_location",{'cookies'}),
+            ("authjwt_secret_key","secret"),
+            ("authjwt_access_cookie_key","access_cookie"),
+            ("authjwt_access_csrf_header_name","X-CSRF-Access"),
+            ("authjwt_refresh_cookie_key","refresh_cookie"),
+            ("authjwt_refresh_csrf_header_name","X-CSRF-Refresh")
+        ]
+
+    res = client.get('/all-token')
+    csrf_access = res.cookies.get("csrf_access_token")
+    csrf_refresh = res.cookies.get("csrf_refresh_token")
+
+    if url != "/jwt-refresh":
+        response = client.post(url,headers={"X-CSRF-Access": csrf_access})
+        assert response.status_code == 200
+        assert response.json() == {'hello': 1}
+    else:
+        response = client.post(url,headers={"X-CSRF-Refresh": csrf_refresh})
+        assert response.status_code == 200
+        assert response.json() == {'hello': 1}
+
+    # missing csrf token
+    response = client.post(url)
+    assert response.status_code == 401
+    assert response.json() == {'detail': 'Missing CSRF Token'}
+
+    # missing cookie
+    client.get('/unset-all-token')
+    response = client.post(url)
+    assert response.status_code == 401
+    if url != "/jwt-refresh":
+        assert response.json() == {'detail': 'Missing cookie access_cookie'}
+    else:
+        assert response.json() == {'detail': 'Missing cookie refresh_cookie'}
+
+    # change csrf protect to False not check csrf token
+    @AuthJWT.load_config
+    def change_request_csrf_protect_to_false():
+        return [
+            ("authjwt_token_location",{'cookies'}),
+            ("authjwt_secret_key","secret"),
+            ("authjwt_cookie_csrf_protect",False)
+        ]
+
+    client.get('/all-token')
+    response = client.post(url)
+    assert response.status_code == 200
+    assert response.json() == {'hello': 1}
+
+    # change request methods and not check csrf token
+    @AuthJWT.load_config
+    def change_request_methods():
+        return [
+            ("authjwt_csrf_methods",{"GET"}),
+            ("authjwt_token_location",{'cookies'}),
+            ("authjwt_secret_key","secret"),
+            ("authjwt_cookie_csrf_protect",True)
+        ]
+
+    response = client.post(url)
+    assert response.status_code == 200
+    assert response.json() == {'hello': 1}
+
+    # missing claim csrf in token
+    @AuthJWT.load_config
+    def change_request_methods_to_default():
+        return [
+            ("authjwt_csrf_methods",{'POST','PUT','PATCH','DELETE'}),
+            ("authjwt_token_location",{'cookies'}),
+            ("authjwt_secret_key","secret"),
+        ]
+
+    response = client.post(url,headers={"X-CSRF-Token":"invalid"})
+    assert response.status_code == 422
+    assert response.json() == {'detail': 'Missing claim: csrf'}
+
+    # csrf token do not match
+    res = client.get('/all-token')
+    csrf_access = res.cookies.get("csrf_access_token")
+    csrf_refresh = res.cookies.get("csrf_refresh_token")
+
+    response = client.post(url,headers={"X-CSRF-Token":"invalid"})
+    assert response.status_code == 401
+    assert response.json() == {'detail': 'CSRF double submit tokens do not match'}
+
+    # valid request
+    if url != "/jwt-refresh":
+        response = client.post(url,headers={"X-CSRF-Token": csrf_access})
+    else:
+        response = client.post(url,headers={"X-CSRF-Token": csrf_refresh})
     assert response.status_code == 200
     assert response.json() == {'hello': 1}
