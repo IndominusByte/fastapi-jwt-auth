@@ -1,11 +1,14 @@
-import setuptools
+import re, setuptools
+
+with open("fastapi_jwt_auth/__init__.py") as f:
+    version = re.search(r"^__version__ = ['\"]([^'\"]*)['\"]", f.read(), re.M).group(1)
 
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
 setuptools.setup(
     name="fastapi-jwt-auth",
-    version="0.2.0",
+    version=version,
     author="Nyoman Pradipta Dewantara",
     author_email="nyomanpradipta120@gmail.com",
     description="FastAPI extension that provides JWT Auth support",
