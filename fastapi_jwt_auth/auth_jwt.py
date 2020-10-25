@@ -127,7 +127,8 @@ class AuthJWT(AuthConfig):
         algorithm: Optional[str] = None,
         headers: Optional[Dict] = None,
         issuer: Optional[str] = None,
-        audience: Optional[Union[str,Sequence[str]]] = None
+        audience: Optional[Union[str,Sequence[str]]] = None,
+        user_claims: Optional[Dict] = {}
     ) -> str:
         """
         Create token for access_token and refresh_token (utf-8)
@@ -140,6 +141,7 @@ class AuthJWT(AuthConfig):
         :param headers: valid dict for specifying additional headers in JWT header section
         :param issuer: expected issuer in the JWT
         :param audience: expected audience in the JWT
+        :param user_claims: Custom claims to include in this token. This data must be dictionary
 
         :return: Encoded token
         """
@@ -152,6 +154,8 @@ class AuthJWT(AuthConfig):
             raise TypeError("audience must be a string or sequence")
         if algorithm and not isinstance(algorithm, str):
             raise TypeError("algorithm must be a string")
+        if user_claims and not isinstance(user_claims, dict):
+            raise TypeError("user_claims must be a dictionary")
 
         # Data section
         reserved_claims = {
@@ -185,7 +189,7 @@ class AuthJWT(AuthConfig):
             raise
 
         return jwt.encode(
-            {**reserved_claims, **custom_claims},
+            {**reserved_claims, **custom_claims, **user_claims},
             secret_key,
             algorithm=algorithm,
             headers=headers
@@ -256,7 +260,8 @@ class AuthJWT(AuthConfig):
         algorithm: Optional[str] = None,
         headers: Optional[Dict] = None,
         expires_time: Optional[Union[timedelta,int,bool]] = None,
-        audience: Optional[Union[str,Sequence[str]]] = None
+        audience: Optional[Union[str,Sequence[str]]] = None,
+        user_claims: Optional[Dict] = {}
     ) -> str:
         """
         Create a access token with 15 minutes for expired time (default),
@@ -272,6 +277,7 @@ class AuthJWT(AuthConfig):
             algorithm=algorithm,
             headers=headers,
             audience=audience,
+            user_claims=user_claims,
             issuer=self._encode_issuer
         )
 
@@ -281,7 +287,8 @@ class AuthJWT(AuthConfig):
         algorithm: Optional[str] = None,
         headers: Optional[Dict] = None,
         expires_time: Optional[Union[timedelta,int,bool]] = None,
-        audience: Optional[Union[str,Sequence[str]]] = None
+        audience: Optional[Union[str,Sequence[str]]] = None,
+        user_claims: Optional[Dict] = {}
     ) -> str:
         """
         Create a refresh token with 30 days for expired time (default),
@@ -295,7 +302,8 @@ class AuthJWT(AuthConfig):
             exp_time=self._get_expired_time("refresh",expires_time),
             algorithm=algorithm,
             headers=headers,
-            audience=audience
+            audience=audience,
+            user_claims=user_claims
         )
 
     def _get_csrf_token(self,encoded_token: str) -> str:

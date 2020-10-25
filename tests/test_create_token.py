@@ -93,3 +93,16 @@ def test_create_token_invalid_type_data_algorithm(Authorize):
 
     with pytest.raises(TypeError,match=r"algorithm"):
         Authorize.create_refresh_token(subject=1,algorithm=1)
+
+def test_create_token_invalid_user_claims(Authorize):
+    with pytest.raises(TypeError,match=r"user_claims"):
+        Authorize.create_access_token(subject=1,user_claims="asd")
+    with pytest.raises(TypeError,match=r"user_claims"):
+        Authorize.create_refresh_token(subject=1,user_claims="asd")
+
+def test_create_valid_user_claims(Authorize):
+    access_token = Authorize.create_access_token(subject=1,user_claims={"my_access":"yeah"})
+    refresh_token = Authorize.create_refresh_token(subject=1,user_claims={"my_refresh":"hello"})
+
+    assert jwt.decode(access_token,"testing",algorithms="HS256")['my_access'] == "yeah"
+    assert jwt.decode(refresh_token,"testing",algorithms="HS256")['my_refresh'] == "hello"
