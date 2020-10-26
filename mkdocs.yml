@@ -1,0 +1,7 @@
+site_name: FastAPI JWT Auth
+site_description: FastAPI extension that provides JWT Auth support (secure, easy to use, and lightweight)
+theme:
+  name: material
+
+repo_name: IndominusByte/fastapi-jwt-auth
+repo_url: https://github.com/IndominusByte/fastapi-jwt-auth
