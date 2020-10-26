@@ -1,17 +1,27 @@
-# Welcome to MkDocs
+<h1 align="center" style="margin-bottom: 20px; font-weight: 500; font-size: 50px;">
+  FastAPI JWT Auth
+</h1>
+<p align="center">
+    <em>FastAPI extension that provides JWT Auth support (secure, easy to use, and lightweight)</em>
+</p>
 
-For full documentation visit [mkdocs.org](https://www.mkdocs.org).
+[![Build Status](https://travis-ci.org/IndominusByte/fastapi-jwt-auth.svg?branch=master)](https://travis-ci.org/IndominusByte/fastapi-jwt-auth)
+[![Coverage Status](https://coveralls.io/repos/github/IndominusByte/fastapi-jwt-auth/badge.svg?branch=master)](https://coveralls.io/github/IndominusByte/fastapi-jwt-auth?branch=master)
+[![PyPI version](https://badge.fury.io/py/fastapi-jwt-auth.svg)](https://badge.fury.io/py/fastapi-jwt-auth)
+[![Downloads](https://pepy.tech/badge/fastapi-jwt-auth)](https://pepy.tech/project/fastapi-jwt-auth)
 
-## Commands
+---
 
-* `mkdocs new [dir-name]` - Create a new project.
-* `mkdocs serve` - Start the live-reloading docs server.
-* `mkdocs build` - Build the documentation site.
-* `mkdocs -h` - Print help message and exit.
+**Documentation**: <a href="https://IndominusByte.github.io/fastapi-jwt-auth/" target="_blank">https://IndominusByte.github.io/fastapi-jwt-auth/</a>
 
-## Project layout
+**Source Code**: <a href="https://github.com/IndominusByte/fastapi-jwt-auth/" target="_blank">https://github.com/IndominusByte/fastapi-jwt-auth/</a>
 
-    mkdocs.yml    # The configuration file.
-    docs/
-        index.md  # The documentation homepage.
-        ...       # Other markdown pages, images and other files.
+---
+
+## Features
+FastAPI extension that provides JWT Auth support (secure, easy to use and lightweight), if you were familiar with flask-jwt-extended this extension suitable for you because this extension inspired by flask-jwt-extended.
+
+- Access token and refresh token
+- Token freshness will only allow fresh tokens to access endpoint
+- Token revoking/blacklisting
+- Custom token revoking

@@ -5,3 +5,25 @@ theme:
 
 repo_name: IndominusByte/fastapi-jwt-auth
 repo_url: https://github.com/IndominusByte/fastapi-jwt-auth
+
+markdown_extensions:
+  - pymdownx.highlight:
+      linenums_style: pymdownx.inline
+  - pymdownx.superfences
+  - pymdownx.inlinehilite
+
+nav:
+  - About: index.md
+  - Installation: installation.md
+  - Usage:
+    - Basic Usage: usage/basic.md
+    - Partially Protecting: usage/optional.md
+    - Refresh Tokens: usage/refresh.md
+    - Token Freshness: usage/freshness.md
+    - Token Revoking: usage/revoking.md
+  - Configuration Options:
+    - General Options: configuration-options/general.md
+    - Headers Options: configuration-options/headers.md
+    - Cookies Options: configuration-options/cookies.md
+    - CSRF Options: configuration-options/csrf.md
+    - Denylist Options: configuration-options/denylist.md
