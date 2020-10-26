@@ -8,7 +8,12 @@ Here is a basic example use token revoking:
 
 In production, you will likely want to use either a database or in-memory store (such as Redis) to store your tokens. memory stores are great if you are wanting to revoke a token when the users log out and you can define timeout to your token in Redis, after the timeout has expired, the token will automatically be deleted.
 
+!!! note
+    Before that make sure redis already installed on your local machine,
+    you can use docker using this command `docker run -d -p 6379:6379 redis`
+
 Here example use Redis for revoking a token:
 
 ```python
+{!../examples/denylist_redis.py!}
 ```
