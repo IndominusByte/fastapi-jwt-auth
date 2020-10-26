@@ -7,8 +7,14 @@ repo_name: IndominusByte/fastapi-jwt-auth
 repo_url: https://github.com/IndominusByte/fastapi-jwt-auth
 
 markdown_extensions:
+  - markdown_include.include:
+      base_path: docs
+  - toc:
+      permalink: true
   - pymdownx.highlight:
       linenums_style: pymdownx.inline
+  - admonition
+  - codehilite
   - pymdownx.superfences
   - pymdownx.inlinehilite
 

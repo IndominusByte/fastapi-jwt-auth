@@ -10,18 +10,13 @@ class User(BaseModel):
     username: str
     password: str
 
-# in production you can use Settings management
-# from pydantic to get secret key from .env
 class Settings(BaseModel):
     authjwt_secret_key: str = "secret"
 
-# callback to get your configuration
 @AuthJWT.load_config
 def get_config():
     return Settings()
 
-# exception handler for authjwt
-# in production, you can tweak performance using orjson response
 @app.exception_handler(AuthJWTException)
 def authjwt_exception_handler(request: Request, exc: AuthJWTException):
     return JSONResponse(
@@ -29,23 +24,18 @@ def authjwt_exception_handler(request: Request, exc: AuthJWTException):
         content={"detail": exc.message}
     )
 
-# provide a method to create access tokens. The create_access_token()
-# function is used to actually generate the token to use authorization
-# later in endpoint protected
 @app.post('/login')
 def login(user: User, Authorize: AuthJWT = Depends()):
     if user.username != "test" and user.password != "test":
         raise HTTPException(status_code=401,detail="Bad username or password")
 
-    # subject identifier for who this token is for example id or username from database
     access_token = Authorize.create_access_token(subject=user.username)
     return {"access_token": access_token}
 
-# protect endpoint with function jwt_required(), which requires
-# a valid access token in the request headers to access.
-@app.get('/user')
-def user(Authorize: AuthJWT = Depends()):
-    Authorize.jwt_required()
+@app.get('/partially-protected')
+def partially_protected(Authorize: AuthJWT = Depends()):
+    Authorize.jwt_optional()
 
-    current_user = Authorize.get_jwt_subject()
+    # If no jwt is sent in the request, get_jwt_subject() will return None
+    current_user = Authorize.get_jwt_subject() or "anonymous"
     return {"user": current_user}

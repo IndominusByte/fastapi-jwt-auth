@@ -3,6 +3,7 @@ This will allow you to revoke a specific token so that it can no longer access y
 Here is a basic example use token revoking:
 
 ```python
+{!../examples/denylist.py!}
 ```
 
 In production, you will likely want to use either a database or in-memory store (such as Redis) to store your tokens. memory stores are great if you are wanting to revoke a token when the users log out and you can define timeout to your token in Redis, after the timeout has expired, the token will automatically be deleted.
