@@ -15,6 +15,7 @@ markdown_extensions:
       permalink: true
   - pymdownx.highlight:
       linenums_style: pymdownx.inline
+  - def_list
   - admonition
   - codehilite
   - pymdownx.superfences
@@ -26,8 +27,8 @@ nav:
     - Basic Usage: usage/basic.md
     - Partially Protecting: usage/optional.md
     - Refresh Tokens: usage/refresh.md
-    - Token Freshness: usage/freshness.md
-    - Token Revoking: usage/revoking.md
+    - Freshness Tokens: usage/freshness.md
+    - Revoking Tokens: usage/revoking.md
   - Configuration Options:
     - General Options: configuration/general.md
     - Headers Options: configuration/headers.md

@@ -15,13 +15,13 @@ INFO:     Application startup complete.
 INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
 ```
 
-To access a jwt_required protected url, all we have to do is send in the JWT with the request. By default, this is done with an authorization header that looks like:
+To access a **jwt_required** protected url, all we have to do is send in the JWT with the request. By default, this is done with an authorization header that looks like:
 
 ```
 Authorization: Bearer <access_token>
 ```
 
-We can see this in action using <b>curl</b>:
+We can see this in action using **curl**:
 
 ```bash
 $ curl http://localhost:8000/user
