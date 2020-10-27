@@ -15,6 +15,7 @@ markdown_extensions:
       permalink: true
   - pymdownx.highlight:
       linenums_style: pymdownx.inline
+  - attr_list
   - def_list
   - admonition
   - codehilite
@@ -29,6 +30,7 @@ nav:
     - Refresh Tokens: usage/refresh.md
     - Freshness Tokens: usage/freshness.md
     - Revoking Tokens: usage/revoking.md
+    - JWT in Cookies: usage/jwt_in_cookies.md
   - Configuration Options:
     - General Options: configuration/general.md
     - Headers Options: configuration/headers.md
