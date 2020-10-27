@@ -34,6 +34,6 @@ nav:
   - Configuration Options:
     - General Options: configuration/general.md
     - Headers Options: configuration/headers.md
+    - Denylist Options: configuration/denylist.md
     - Cookies Options: configuration/cookies.md
     - CSRF Options: configuration/csrf.md
-    - Denylist Options: configuration/denylist.md
