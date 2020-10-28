@@ -4,6 +4,6 @@ Utilizing refresh tokens we can help reduce the damage that can be done if an ac
 
 Here is an example of using access and refresh tokens:
 
-```python hl_lines="35"
+```python hl_lines="35 46"
 {!../examples/refresh.py!}
 ```

@@ -2,7 +2,7 @@ This will allow you to revoke a specific tokens so that it can no longer access 
 
 Here is a basic example use tokens revoking:
 
-```python
+```python hl_lines="17-18 34 40-43 70 79"
 {!../examples/denylist.py!}
 ```
 
@@ -14,6 +14,6 @@ In production, you will likely want to use either a database or in-memory store 
 
 Here example use Redis for revoking a tokens:
 
-```python
+```python hl_lines="7 17-20 38 44-48 78 87"
 {!../examples/denylist_redis.py!}
 ```

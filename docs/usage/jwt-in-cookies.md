@@ -2,7 +2,7 @@ Highly recommended using JWT in cookies, if your frontend interacts with the bac
 
 Here is a basic example of how to store JWT in cookies:
 
-```python
+```python hl_lines="21 23 46-47 57 69"
 {!../examples/jwt_in_cookies.py!}
 ```
 
@@ -27,6 +27,6 @@ No system is safe. If an attacker can perform an XSS attack they can still acces
 
 Here is an example of using cookies with CSRF protection:
 
-```python
+```python hl_lines="23 25 27 29 56-57 67 79"
 {!../examples/csrf_protection_cookies.py!}
 ```

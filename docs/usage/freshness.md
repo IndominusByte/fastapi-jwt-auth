@@ -4,6 +4,6 @@ This is useful for allowing the fresh tokens to do some critical things (such as
 
 Here is an example of how you could utilize refresh tokens with the fresh token pattern:
 
-```python hl_lines="39"
+```python hl_lines="39 82"
 {!../examples/freshness.py!}
 ```
