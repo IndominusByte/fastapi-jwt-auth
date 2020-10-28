@@ -15,6 +15,12 @@ markdown_extensions:
       permalink: true
   - pymdownx.highlight:
       linenums_style: pymdownx.inline
+  - pymdownx.magiclink:
+      user: IndominusByte
+      repo: fastapi-jwt-auth
+      repo_url_shorthand: true
+  - pymdownx.emoji:
+      emoji_index: !!python/name:pymdownx.emoji.twemoji
   - attr_list
   - def_list
   - admonition
@@ -30,10 +36,15 @@ nav:
     - Refresh Tokens: usage/refresh.md
     - Freshness Tokens: usage/freshness.md
     - Revoking Tokens: usage/revoking.md
-    - JWT in Cookies: usage/jwt_in_cookies.md
+    - JWT in Cookies: usage/jwt-in-cookies.md
   - Configuration Options:
     - General Options: configuration/general.md
     - Headers Options: configuration/headers.md
     - Denylist Options: configuration/denylist.md
     - Cookies Options: configuration/cookies.md
     - CSRF Options: configuration/csrf.md
+  - Development - Contributing: contributing.md
+  - Release Notes: release-notes.md
+
+extra_css:
+  - 'css/custom.css'

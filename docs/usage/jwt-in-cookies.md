@@ -23,7 +23,7 @@ Now in order to access a protected endpoint, you will need to add a custom heade
 
 To break this down, if an attacker attempts to perform a CSRF attack they will send the JWT *(via cookie)* to protected endpoint, but without the random string in the request headers, they won't be able to access the endpoint. They cannot access the random string unless they can run javascript on your website *likely via an XSS attack*, and if they are able to perform an XSS attack, they will not be able to steal the actual access and refresh JWT, as javascript is still not able to access those httponly cookies.
 
-No system is secure. If an attacker can perform an XSS attack they can still access protected endpoints from people who visit your site. However, it is better than if they were able to steal the access and refresh tokens from local/session storage, and use them whenever they wanted.
+No system is safe. If an attacker can perform an XSS attack they can still access protected endpoints from people who visit your site. However, it is better than if they were able to steal the access and refresh tokens from local/session storage, and use them whenever they wanted.
 
 Here is an example of using cookies with CSRF protection:
 

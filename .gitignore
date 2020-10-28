@@ -30,6 +30,7 @@ var/
 
 # coverage
 .coverage
+htmlcov/
 
 # testing py
 test.py

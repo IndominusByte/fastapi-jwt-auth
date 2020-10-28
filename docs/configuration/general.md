@@ -15,7 +15,7 @@
     Defaults to `None`
 
 `authjwt_algorithm`
-:   Which algorithm to sign the JWT with. <a href="https://pyjwt.readthedocs.io/en/latest/algorithms.html">See here</a>
+:   Which algorithm to sign the JWT with. <a href="https://pyjwt.readthedocs.io/en/latest/algorithms.html" class="external-link">See here</a>
     for the options. Defaults to `HS256`
 
 `authjwt_decode_algorithms`
