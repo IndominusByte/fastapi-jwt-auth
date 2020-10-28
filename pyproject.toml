@@ -36,14 +36,14 @@ test = [
 ]
 
 doc = [
-  "mkdocs >=1.1.2,<2.0.0",
-  "mkdocs-material >=5.5.0,<6.0.0",
-  "markdown-include >=0.5.1,<0.6.0"
+  "mkdocs>=1.1.2,<2.0.0",
+  "mkdocs-material>=5.5.0,<6.0.0",
+  "markdown-include>=0.5.1,<0.6.0"
 ]
 
 dev = [
   "cryptography>=2.6,<4.0.0",
-  "uvicorn >=0.11.5,<0.12.0"
+  "uvicorn>=0.11.5,<0.12.0"
 ]
 
 asymmetric = ["cryptography>=2.6,<4.0.0"]

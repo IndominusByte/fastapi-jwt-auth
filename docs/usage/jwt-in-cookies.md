@@ -11,7 +11,7 @@ This isn't the full story. However now we can keep our cookies from being stolen
 <figure>
   <img src="https://miro.medium.com/max/648/1*WP_VXYjJxUyqfrul8K-4uw.png"/>
   <figcaption>
-    <a href="https://medium.com/@kaviru.mihisara/double-submit-cookie-pattern-820fc97e51f2">
+    <a href="https://medium.com/@kaviru.mihisara/double-submit-cookie-pattern-820fc97e51f2" target="_blank">
       Double Submit Cookie Pattern
     </a>
   </figcaption>
