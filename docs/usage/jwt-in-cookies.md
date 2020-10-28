@@ -1,4 +1,4 @@
-Highly recommended using JWT in cookies, if your frontend interaction with the backend, your frontend may be storing JWT in the browser localStorage or sessionStorage. There is nothing wrong with this, but if you have any sort of XSS vulnerability on your site, an attacker will be able to trivially steal your tokens. If you want some additional security on your site, you can save your JWT in an httponly cookies. Which keeps javascript cannot be able to access the cookies.
+Highly recommended using JWT in cookies, if your frontend interacts with the backend, your frontend may be storing JWT in the browser localStorage or sessionStorage. There is nothing wrong with this, but if you have any sort of XSS vulnerability on your site, an attacker will be able to trivially steal your tokens. If you want some additional security on your site, you can save your JWT in an httponly cookies. Which keeps javascript cannot be able to access the cookies.
 
 Here is a basic example of how to store JWT in cookies:
 

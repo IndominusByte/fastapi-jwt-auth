@@ -43,6 +43,7 @@ nav:
     - Denylist Options: configuration/denylist.md
     - Cookies Options: configuration/cookies.md
     - CSRF Options: configuration/csrf.md
+  - API Documentation: api-doc.md
   - Development - Contributing: contributing.md
   - Release Notes: release-notes.md
 
