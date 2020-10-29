@@ -45,7 +45,7 @@ def login(user: User, Authorize: AuthJWT = Depends()):
     With authjwt_cookie_csrf_protect set to True, set_access_cookies() and
     set_refresh_cookies() will now also set the non-httponly CSRF cookies
     """
-    if user.username != "test" and user.password != "test":
+    if user.username != "test" or user.password != "test":
         raise HTTPException(status_code=401,detail="Bad username or password")
 
     # Create the tokens and passing to set_access_cookies or set_refresh_cookies

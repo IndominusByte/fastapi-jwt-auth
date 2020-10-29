@@ -49,7 +49,7 @@ def check_if_token_in_denylist(decrypted_token):
 
 @app.post('/login')
 def login(user: User, Authorize: AuthJWT = Depends()):
-    if user.username != "test" and user.password != "test":
+    if user.username != "test" or user.password != "test":
         raise HTTPException(status_code=401,detail="Bad username or password")
 
     access_token = Authorize.create_access_token(subject=user.username)

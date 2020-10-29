@@ -35,7 +35,7 @@ def authjwt_exception_handler(request: Request, exc: AuthJWTException):
 
 @app.post('/login')
 def login(user: User, Authorize: AuthJWT = Depends()):
-    if user.username != "test" and user.password != "test":
+    if user.username != "test" or user.password != "test":
         raise HTTPException(status_code=401,detail="Bad username or password")
 
     # Create the tokens and passing to set_access_cookies or set_refresh_cookies

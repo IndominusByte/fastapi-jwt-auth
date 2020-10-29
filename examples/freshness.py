@@ -27,7 +27,7 @@ def authjwt_exception_handler(request: Request, exc: AuthJWTException):
 # Standard login endpoint. Will return a fresh access token and a refresh token
 @app.post('/login')
 def login(user: User, Authorize: AuthJWT = Depends()):
-    if user.username != "test" and user.password != "test":
+    if user.username != "test" or user.password != "test":
         raise HTTPException(status_code=401,detail="Bad username or password")
 
     """
@@ -62,7 +62,7 @@ def fresh_login(user: User, Authorize: AuthJWT = Depends()):
     this will only return a new access token, so that we don't keep
     generating new refresh tokens, which entirely defeats their point.
     """
-    if user.username != "test" and user.password != "test":
+    if user.username != "test" or user.password != "test":
         raise HTTPException(status_code=401,detail="Bad username or password")
 
     new_access_token = Authorize.create_access_token(subject=user.username,fresh=True)

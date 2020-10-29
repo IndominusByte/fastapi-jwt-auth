@@ -10,7 +10,7 @@ In here you will find the API for everything exposed in this extension.
 
 **token_in_denylist_loader**(callback)
 :   *This decorator sets the callback function that will be called when
-    a protected endpoint is accessed and will check if the JWT has been
+    a protected endpoint is accessed and will check if the JWT has
     been revoked. By default, this callback is not used.*
 
     **Hint**: *The callback must be a function that takes `one` argument, which is the decoded JWT (python dictionary),

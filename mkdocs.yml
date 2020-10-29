@@ -37,6 +37,12 @@ nav:
     - Freshness Tokens: usage/freshness.md
     - Revoking Tokens: usage/revoking.md
     - JWT in Cookies: usage/jwt-in-cookies.md
+  - Advanced Usage:
+    - Additional claims: advanced-usage/additional-claims.md
+    - Dynamic Token Expires: advanced-usage/dynamic-expires.md
+    - Dynamic Token Algorithm: advanced-usage/dynamic-algorithm.md
+    - Bigger Applications: advanced-usage/bigger-app.md
+    - Generate Documentation: advanced-usage/generate-docs.md
   - Configuration Options:
     - General Options: configuration/general.md
     - Headers Options: configuration/headers.md

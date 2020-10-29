@@ -8,11 +8,11 @@ These are only applicable if `authjwt_token_location` is use cookies.
 
 `authjwt_access_cookie_path`
 :   What path should be set for the access cookie. Defaults to `'/'`, which will cause this
-    access cookie to be sent in with every request.
+    access cookie to be sent in every request.
 
 `authjwt_refresh_cookie_path`
 :   What path should be set for the refresh cookie. Defaults to `'/'`, which will cause this
-    refresh cookie to be sent in with every request. 
+    refresh cookie to be sent in every request. 
 
 `authjwt_cookie_max_age`
 :   If you don't set anything else, the cookie will expire when the browser is closed. Defaults to
