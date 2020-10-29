@@ -1,9 +1,7 @@
-name: ci
-on:
-  push:
-    branches:
-      - master
-      - docs
+name: Build Docs
+
+on: [push, pull_request]
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
