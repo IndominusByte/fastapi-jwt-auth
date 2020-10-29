@@ -1,0 +1,57 @@
+site_name: FastAPI JWT Auth
+site_description: FastAPI extension that provides JWT Auth support (secure, easy to use, and lightweight)
+theme:
+  name: material
+  palette:
+    primary: black
+
+repo_name: IndominusByte/fastapi-jwt-auth
+repo_url: https://github.com/IndominusByte/fastapi-jwt-auth
+
+markdown_extensions:
+  - markdown_include.include:
+      base_path: docs
+  - toc:
+      permalink: true
+  - pymdownx.highlight:
+      linenums_style: pymdownx.inline
+  - pymdownx.magiclink:
+      user: IndominusByte
+      repo: fastapi-jwt-auth
+      repo_url_shorthand: true
+  - pymdownx.emoji:
+      emoji_index: !!python/name:pymdownx.emoji.twemoji
+  - attr_list
+  - def_list
+  - admonition
+  - codehilite
+  - pymdownx.superfences
+  - pymdownx.inlinehilite
+
+nav:
+  - About: index.md
+  - Usage:
+    - Basic Usage: usage/basic.md
+    - Partially Protecting: usage/optional.md
+    - Refresh Tokens: usage/refresh.md
+    - Freshness Tokens: usage/freshness.md
+    - Revoking Tokens: usage/revoking.md
+    - JWT in Cookies: usage/jwt-in-cookies.md
+  - Advanced Usage:
+    - Additional claims: advanced-usage/additional-claims.md
+    - Dynamic Token Expires: advanced-usage/dynamic-expires.md
+    - Dynamic Token Algorithm: advanced-usage/dynamic-algorithm.md
+    - Bigger Applications: advanced-usage/bigger-app.md
+    - Generate Documentation: advanced-usage/generate-docs.md
+  - Configuration Options:
+    - General Options: configuration/general.md
+    - Headers Options: configuration/headers.md
+    - Denylist Options: configuration/denylist.md
+    - Cookies Options: configuration/cookies.md
+    - CSRF Options: configuration/csrf.md
+  - API Documentation: api-doc.md
+  - Development - Contributing: contributing.md
+  - Release Notes: release-notes.md
+
+extra_css:
+  - 'css/custom.css'
