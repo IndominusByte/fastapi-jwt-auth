@@ -1,4 +1,4 @@
-name: Test
+name: Tests
 
 on: [push, pull_request]
 
@@ -23,6 +23,7 @@ jobs:
       - name: Test
         run: bash scripts/tests.sh
       - name: Coveralls
-        uses: coverallsapp/github-action@master
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          coveralls
