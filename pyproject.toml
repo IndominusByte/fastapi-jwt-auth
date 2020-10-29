@@ -36,7 +36,8 @@ Documentation = "https://indominusbyte.github.io/fastapi-jwt-auth/"
 [tool.flit.metadata.requires-extra]
 test = [
   "pytest==6.0.1",
-  "pytest-cov==2.10.0"
+  "pytest-cov==2.10.0",
+  "coveralls==2.1.2"
 ]
 
 doc = [
