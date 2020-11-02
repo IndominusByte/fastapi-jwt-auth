@@ -1,3 +1,6 @@
+## 0.4.0
+* Support set and unset cookies when returning a **Response** directly
+
 ## 0.3.0
 * **(Deprecated)** environment variable support
 * Change name function **load_end()** -> **load_config()**

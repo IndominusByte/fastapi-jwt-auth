@@ -65,32 +65,46 @@ In here you will find the API for everything exposed in this extension.
         * **user_claims**: Custom claims to include in this token. This data must be dictionary
     * Returns: An encoded refresh token
 
-**set_access_cookies**(encoded_access_token, max_age=None)
+**set_access_cookies**(encoded_access_token, response=None, max_age=None)
 :   *Configures the response to set access token in a cookie. This will also set the CSRF double submit values
     in a separate cookie.*
 
     * Parameters:
         * **encoded_access_token**: The encoded access token to set in the cookies
+        * **response**: The FastAPI response object to set the access cookies in
         * **max_age**: The max age of the cookie value should be `integer` the number of seconds
     * Returns: None
 
-**set_refresh_cookies**(encoded_refresh_token, max_age=None)
+**set_refresh_cookies**(encoded_refresh_token, response=None, max_age=None)
 :   *Configures the response to set refresh token in a cookie. This will also set the CSRF double submit values
     in a separate cookie.*
 
     * Parameters:
         * **encoded_refresh_token**: The encoded refresh token to set in the cookies
+        * **response**: The FastAPI response object to set the refresh cookies in
         * **max_age**: The max age of the cookie value should be `integer` the number of seconds
     * Returns: None
 
-**unset_jwt_cookies**()
+**unset_jwt_cookies**(response=None)
 :   *Unset (delete) all jwt stored in a cookies.*
 
-**unset_access_cookies**()
+    * Parameters:
+        * **response**: The FastAPI response object to delete the JWT cookies in
+    * Returns: None
+
+**unset_access_cookies**(response=None)
 :   *Remove access token and access CSRF double submit from the response cookies.*
 
-**unset_refresh_cookies**()
+    * Parameters:
+        * **response**: The FastAPI response object to delete the access cookies in
+    * Returns: None
+
+**unset_refresh_cookies**(response=None)
 :   *Remove refresh token and refresh CSRF double submit from the response cookies.*
+
+    * Parameters:
+        * **response**: The FastAPI response object to delete the refresh cookies in
+    * Returns: None
 
 **get_raw_jwt**()
 :   *This will return the python dictionary which has all of the claims of the JWT that is accessing the endpoint.

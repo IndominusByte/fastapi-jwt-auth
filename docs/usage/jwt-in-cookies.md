@@ -2,6 +2,19 @@ Highly recommended using JWT in cookies, if your frontend interacts with the bac
 
 Here is a basic example of how to store JWT in cookies:
 
+!!! note
+    You can also create cookies or unset cookies when returning a `Response` directly in your code.
+    To do that, you can create a response then set the response in set cookies or unset cookies
+
+    ``` python
+    ...
+    response = JSONResponse(content={"msg":"Successfully login"})
+    # Set the JWT and CSRF double submit cookies in the response
+    Authorize.set_access_cookies(access_token,response)
+    Authorize.set_refresh_cookies(refresh_token,response)
+    return response
+    ```
+
 ```python hl_lines="21 23 46-47 57 69"
 {!../examples/jwt_in_cookies.py!}
 ```
