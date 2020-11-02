@@ -24,11 +24,27 @@ def client():
         Authorize.set_refresh_cookies(refresh_token)
         return {"msg":"all token"}
 
+    @app.get('/all-token-response')
+    def all_token_response(Authorize: AuthJWT = Depends()):
+        access_token = Authorize.create_access_token(subject=1,fresh=True)
+        refresh_token = Authorize.create_refresh_token(subject=1)
+        response = JSONResponse(content={"msg":"all token"})
+        Authorize.set_access_cookies(access_token,response)
+        Authorize.set_refresh_cookies(refresh_token,response)
+        return response
+
     @app.get('/access-token')
     def access_token(Authorize: AuthJWT = Depends()):
         access_token = Authorize.create_access_token(subject=1)
         Authorize.set_access_cookies(access_token)
         return {"msg":"access token"}
+
+    @app.get('/access-token-response')
+    def access_token_response(Authorize: AuthJWT = Depends()):
+        access_token = Authorize.create_access_token(subject=1)
+        response = JSONResponse(content={"msg":"access token"})
+        Authorize.set_access_cookies(access_token,response)
+        return response
 
     @app.get('/refresh-token')
     def refresh_token(Authorize: AuthJWT = Depends()):
@@ -36,10 +52,23 @@ def client():
         Authorize.set_refresh_cookies(refresh_token)
         return {"msg":"refresh token"}
 
+    @app.get('/refresh-token-response')
+    def refresh_token_response(Authorize: AuthJWT = Depends()):
+        refresh_token = Authorize.create_refresh_token(subject=1)
+        response = JSONResponse(content={"msg":"refresh token"})
+        Authorize.set_refresh_cookies(refresh_token,response)
+        return response
+
     @app.get('/unset-all-token')
     def unset_all_token(Authorize: AuthJWT = Depends()):
         Authorize.unset_jwt_cookies()
         return {"msg":"unset all token"}
+
+    @app.get('/unset-all-token-response')
+    def unset_all_token_response(Authorize: AuthJWT = Depends()):
+        response = JSONResponse(content={"msg":"unset all token"})
+        Authorize.unset_jwt_cookies(response)
+        return response
 
     @app.get('/unset-access-token')
     def unset_access_token(Authorize: AuthJWT = Depends()):
@@ -96,7 +125,29 @@ def test_set_cookie_not_valid_type_max_age(Authorize):
     with pytest.raises(TypeError,match=r"max_age"):
         Authorize.set_refresh_cookies(token,max_age="string")
 
-@pytest.mark.parametrize("url",["/access-token","/refresh-token"])
+def test_set_unset_cookies_not_valid_type_response(Authorize):
+    @AuthJWT.load_config
+    def get_cookie_location():
+        return [("authjwt_token_location",{'cookies'}),("authjwt_secret_key","secret")]
+
+    token = Authorize.create_access_token(subject=1)
+
+    with pytest.raises(TypeError,match=r"response"):
+        Authorize.set_access_cookies(token,response={"msg":"hello"})
+
+    with pytest.raises(TypeError,match=r"response"):
+        Authorize.set_refresh_cookies(token,response={"msg":"hello"})
+
+    with pytest.raises(TypeError,match=r"response"):
+        Authorize.unset_jwt_cookies({"msg":"hello"})
+
+    with pytest.raises(TypeError,match=r"response"):
+        Authorize.unset_access_cookies({"msg":"hello"})
+
+    with pytest.raises(TypeError,match=r"response"):
+        Authorize.unset_refresh_cookies({"msg":"hello"})
+
+@pytest.mark.parametrize("url",["/access-token","/refresh-token","/access-token-response","/refresh-token-response"])
 def test_set_cookie_csrf_protect_false(url,client):
     @AuthJWT.load_config
     def get_cookie_location():
@@ -110,7 +161,7 @@ def test_set_cookie_csrf_protect_false(url,client):
     response = client.get(url)
     assert response.cookies.get("csrf_{}_token".format(cookie_key)) is None
 
-@pytest.mark.parametrize("url",["/access-token","/refresh-token"])
+@pytest.mark.parametrize("url",["/access-token","/refresh-token","/access-token-response","/refresh-token-response"])
 def test_set_cookie_csrf_protect_true(url,client):
     @AuthJWT.load_config
     def get_cookie_location():
@@ -133,6 +184,26 @@ def test_unset_all_cookie(client):
     assert response.cookies.get("csrf_refresh_token") is not None
 
     response = client.get('/unset-all-token')
+
+    assert response.cookies.get("access_token_cookie") is None
+    assert response.cookies.get("csrf_access_token") is None
+
+    assert response.cookies.get("refresh_token_cookie") is None
+    assert response.cookies.get("csrf_refresh_token") is None
+
+def test_unset_all_cookie_response(client):
+    @AuthJWT.load_config
+    def get_cookie_location():
+        return [("authjwt_token_location",{'cookies'}),("authjwt_secret_key","secret")]
+
+    response = client.get('/all-token-response')
+    assert response.cookies.get("access_token_cookie") is not None
+    assert response.cookies.get("csrf_access_token") is not None
+
+    assert response.cookies.get("refresh_token_cookie") is not None
+    assert response.cookies.get("csrf_refresh_token") is not None
+
+    response = client.get('/unset-all-token-response')
 
     assert response.cookies.get("access_token_cookie") is None
     assert response.cookies.get("csrf_access_token") is None

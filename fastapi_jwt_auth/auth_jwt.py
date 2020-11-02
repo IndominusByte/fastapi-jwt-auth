@@ -315,12 +315,18 @@ class AuthJWT(AuthConfig):
         """
         return self._verified_token(encoded_token)['csrf']
 
-    def set_access_cookies(self,encoded_access_token: str, max_age: Optional[int] = None) -> None:
+    def set_access_cookies(
+        self,
+        encoded_access_token: str,
+        response: Optional[Response] = None,
+        max_age: Optional[int] = None
+    ) -> None:
         """
         Configures the response to set access token in a cookie.
         this will also set the CSRF double submit values in a separate cookie
 
         :param encoded_access_token: The encoded access token to set in the cookies
+        :param response: The FastAPI response object to set the access cookies in
         :param max_age: The max age of the cookie value should be the number of seconds (integer)
         """
         if not self.jwt_in_cookies:
@@ -330,9 +336,13 @@ class AuthJWT(AuthConfig):
 
         if max_age and not isinstance(max_age,int):
             raise TypeError("max_age must be a integer")
+        if response and not isinstance(response,Response):
+            raise TypeError("The response must be an object response FastAPI")
+
+        response = response or self._response
 
         # Set the access JWT in the cookie
-        self._response.set_cookie(
+        response.set_cookie(
             self._access_cookie_key,
             encoded_access_token,
             max_age=max_age or self._cookie_max_age,
@@ -345,7 +355,7 @@ class AuthJWT(AuthConfig):
 
         # If enabled, set the csrf double submit access cookie
         if self._cookie_csrf_protect:
-            self._response.set_cookie(
+            response.set_cookie(
                 self._access_csrf_cookie_key,
                 self._get_csrf_token(encoded_access_token),
                 max_age=max_age or self._cookie_max_age,
@@ -356,12 +366,18 @@ class AuthJWT(AuthConfig):
                 samesite=self._cookie_samesite
             )
 
-    def set_refresh_cookies(self, encoded_refresh_token: str, max_age: Optional[int] = None) -> None:
+    def set_refresh_cookies(
+        self,
+        encoded_refresh_token: str,
+        response: Optional[Response] = None,
+        max_age: Optional[int] = None
+    ) -> None:
         """
         Configures the response to set refresh token in a cookie.
         this will also set the CSRF double submit values in a separate cookie
 
         :param encoded_refresh_token: The encoded refresh token to set in the cookies
+        :param response: The FastAPI response object to set the refresh cookies in
         :param max_age: The max age of the cookie value should be the number of seconds (integer)
         """
         if not self.jwt_in_cookies:
@@ -371,9 +387,13 @@ class AuthJWT(AuthConfig):
 
         if max_age and not isinstance(max_age,int):
             raise TypeError("max_age must be a integer")
+        if response and not isinstance(response,Response):
+            raise TypeError("The response must be an object response FastAPI")
+
+        response = response or self._response
 
         # Set the refresh JWT in the cookie
-        self._response.set_cookie(
+        response.set_cookie(
             self._refresh_cookie_key,
             encoded_refresh_token,
             max_age=max_age or self._cookie_max_age,
@@ -386,7 +406,7 @@ class AuthJWT(AuthConfig):
 
         # If enabled, set the csrf double submit refresh cookie
         if self._cookie_csrf_protect:
-            self._response.set_cookie(
+            response.set_cookie(
                 self._refresh_csrf_cookie_key,
                 self._get_csrf_token(encoded_refresh_token),
                 max_age=max_age or self._cookie_max_age,
@@ -397,52 +417,68 @@ class AuthJWT(AuthConfig):
                 samesite=self._cookie_samesite
             )
 
-    def unset_jwt_cookies(self) -> None:
+    def unset_jwt_cookies(self,response: Optional[Response] = None) -> None:
         """
         Unset (delete) all jwt stored in a cookie
-        """
-        self.unset_access_cookies()
-        self.unset_refresh_cookies()
 
-    def unset_access_cookies(self) -> None:
+        :param response: The FastAPI response object to delete the JWT cookies in.
+        """
+        self.unset_access_cookies(response)
+        self.unset_refresh_cookies(response)
+
+    def unset_access_cookies(self,response: Optional[Response] = None) -> None:
         """
         Remove access token and access CSRF double submit from the response cookies
+
+        :param response: The FastAPI response object to delete the access cookies in.
         """
         if not self.jwt_in_cookies:
             raise RuntimeWarning(
                 "unset_access_cookies() called without 'authjwt_token_location' configured to use cookies"
             )
 
-        self._response.delete_cookie(
+        if response and not isinstance(response,Response):
+            raise TypeError("The response must be an object response FastAPI")
+
+        response = response or self._response
+
+        response.delete_cookie(
             self._access_cookie_key,
             path=self._access_cookie_path,
             domain=self._cookie_domain
         )
 
         if self._cookie_csrf_protect:
-            self._response.delete_cookie(
+            response.delete_cookie(
                 self._access_csrf_cookie_key,
                 path=self._access_csrf_cookie_path,
                 domain=self._cookie_domain
             )
 
-    def unset_refresh_cookies(self) -> None:
+    def unset_refresh_cookies(self,response: Optional[Response] = None) -> None:
         """
         Remove refresh token and refresh CSRF double submit from the response cookies
+
+        :param response: The FastAPI response object to delete the refresh cookies in.
         """
         if not self.jwt_in_cookies:
             raise RuntimeWarning(
                 "unset_refresh_cookies() called without 'authjwt_token_location' configured to use cookies"
             )
 
-        self._response.delete_cookie(
+        if response and not isinstance(response,Response):
+            raise TypeError("The response must be an object response FastAPI")
+
+        response = response or self._response
+
+        response.delete_cookie(
             self._refresh_cookie_key,
             path=self._refresh_cookie_path,
             domain=self._cookie_domain
         )
 
         if self._cookie_csrf_protect:
-            self._response.delete_cookie(
+            response.delete_cookie(
                 self._refresh_csrf_cookie_key,
                 path=self._refresh_csrf_cookie_path,
                 domain=self._cookie_domain
