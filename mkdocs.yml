@@ -8,6 +8,10 @@ theme:
 repo_name: IndominusByte/fastapi-jwt-auth
 repo_url: https://github.com/IndominusByte/fastapi-jwt-auth
 
+google_analytics:
+  - G-P08KBZV1K6
+  - auto
+
 markdown_extensions:
   - markdown_include.include:
       base_path: docs
@@ -40,6 +44,7 @@ nav:
     - JWT in Cookies: usage/jwt-in-cookies.md
   - Advanced Usage:
     - Additional claims: advanced-usage/additional-claims.md
+    - Asymmetric Algorithm: advanced-usage/asymmetric.md
     - Dynamic Token Expires: advanced-usage/dynamic-expires.md
     - Dynamic Token Algorithm: advanced-usage/dynamic-algorithm.md
     - Bigger Applications: advanced-usage/bigger-app.md

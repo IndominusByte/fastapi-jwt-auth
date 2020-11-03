@@ -7,11 +7,11 @@
 :   The secret key needed for symmetric based signing algorithms, such as `HS*`. Defaults to `None`
 
 `authjwt_public_key`
-:   The public key needed for asymmetric based signing algorithms, such as `RS*` or `ES*`. PEM format expected.
+:   The public key needed for asymmetric based signing algorithms, such as `RS*` or `EC*`. PEM format expected.
     Defaults to `None`
 
 `authjwt_private_key`
-:   The private key needed for asymmetric based signing algorithms, such as `RS*` or `ES*`. PEM format expected.
+:   The private key needed for asymmetric based signing algorithms, such as `RS*` or `EC*`. PEM format expected.
     Defaults to `None`
 
 `authjwt_algorithm`
