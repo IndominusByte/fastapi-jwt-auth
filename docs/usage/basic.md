@@ -35,7 +35,7 @@ $ curl -H "Content-Type: application/json" -X POST \
 
 $ export TOKEN=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ0ZXN0IiwiaWF0IjoxNjAzNjkyMjYxLCJuYmYiOjE2MDM2OTIyNjEsImp0aSI6IjZiMjZkZTkwLThhMDYtNDEzMy04MzZiLWI5ODJkZmI3ZjNmZSIsImV4cCI6MTYwMzY5MzE2MSwidHlwZSI6ImFjY2VzcyIsImZyZXNoIjpmYWxzZX0.ro5JMHEVuGOq2YsENkZigSpqMf5cmmgPP8odZfxrzJA
 
-$ curl -H "Authorization: Bearer $TOKEN" http://localhost:8000
+$ curl -H "Authorization: Bearer $TOKEN" http://localhost:8000/user
 
 {"user":"test"}
 ```
