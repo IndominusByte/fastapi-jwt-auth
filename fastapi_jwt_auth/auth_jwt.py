@@ -608,7 +608,7 @@ class AuthJWT(AuthConfig):
             if token_from == 'headers':
                 raise MissingTokenError(status_code=401,message="Missing {} Header".format(self._header_name))
             if token_from == 'websocket':
-                raise MissingTokenError(status_code=1008,message="Missing token from Query or Path")
+                raise MissingTokenError(status_code=1008,message="Missing {} token from Query or Path".format(type_token))
 
         # verify jwt
         issuer = self._decode_issuer if type_token == 'access' else None
