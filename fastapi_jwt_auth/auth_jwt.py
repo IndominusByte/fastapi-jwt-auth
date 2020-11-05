@@ -2,8 +2,7 @@ import jwt, re, uuid, hmac
 from jwt.algorithms import requires_cryptography, has_crypto
 from datetime import datetime, timezone, timedelta
 from typing import Optional, Dict, Union, Sequence
-from types import GeneratorType
-from fastapi import Request, Response
+from fastapi import Request, Response, WebSocket
 from fastapi_jwt_auth.auth_config import AuthConfig
 from fastapi_jwt_auth.exceptions import (
     InvalidHeaderError,
@@ -148,9 +147,9 @@ class AuthJWT(AuthConfig):
         # Validation type data
         if not isinstance(subject, (str,int)):
             raise TypeError("subject must be a string or integer")
-        if not isinstance(fresh, (bool)):
+        if not isinstance(fresh, bool):
             raise TypeError("fresh must be a boolean")
-        if audience and not isinstance(audience, (str, list, tuple, set, frozenset, GeneratorType)):
+        if audience and not isinstance(audience, (str, list, tuple, set, frozenset)):
             raise TypeError("audience must be a string or sequence")
         if algorithm and not isinstance(algorithm, str):
             raise TypeError("algorithm must be a string")
@@ -484,23 +483,30 @@ class AuthJWT(AuthConfig):
                 domain=self._cookie_domain
             )
 
-    def _verify_and_get_jwt_optional_in_cookies(self) -> "AuthJWT":
+    def verify_and_get_jwt_optional_in_cookies(
+        self,
+        request: Union[Request,WebSocket],
+        csrf_token: Optional[str] = None,
+    ) -> "AuthJWT":
         """
         Optionally check if cookies have a valid access token. if an access token present in
-        cookies property _token will set. raises exception error when an access token is invalid
+        cookies, self._token will set. raises exception error when an access token is invalid
         and doesn't match with CSRF token double submit
-        """
-        cookie_key = self._access_cookie_key
-        cookie = self._request.cookies.get(cookie_key)
-        csrf_cookie = self._request.headers.get(self._access_csrf_header_name)
 
-        if (
-            cookie and
-            self._cookie_csrf_protect and
-            self._request.method in self._csrf_methods and
-            not csrf_cookie
-        ):
-            raise CSRFError(status_code=401,message="Missing CSRF Token")
+        :param request: for identity get cookies from HTTP or WebSocket
+        :param csrf_token: get csrf token if a request from WebSocket
+        """
+        if not isinstance(request,(Request,WebSocket)):
+            raise TypeError("request must be an instance of 'Request' or 'WebSocket'")
+
+        cookie_key = self._access_cookie_key
+        cookie = request.cookies.get(cookie_key)
+        if not isinstance(request, WebSocket):
+            csrf_token = request.headers.get(self._access_csrf_header_name)
+
+        if cookie and self._cookie_csrf_protect and not csrf_token:
+            if isinstance(request, WebSocket) or request.method in self._csrf_methods:
+                raise CSRFError(status_code=401,message="Missing CSRF Token")
 
         # set token from cookie and verify jwt
         self._token = cookie
@@ -508,44 +514,52 @@ class AuthJWT(AuthConfig):
 
         decoded_token = self.get_raw_jwt()
 
-        if (
-            self._cookie_csrf_protect and
-            self._request.method in self._csrf_methods and
-            csrf_cookie and
-            decoded_token
-        ):
-            if 'csrf' not in decoded_token:
-                raise JWTDecodeError(status_code=422,message="Missing claim: csrf")
-            if not hmac.compare_digest(csrf_cookie,decoded_token['csrf']):
-                raise CSRFError(status_code=401,message="CSRF double submit tokens do not match")
+        if decoded_token and self._cookie_csrf_protect and csrf_token:
+            if isinstance(request, WebSocket) or request.method in self._csrf_methods:
+                if 'csrf' not in decoded_token:
+                    raise JWTDecodeError(status_code=422,message="Missing claim: csrf")
+                if not hmac.compare_digest(csrf_token,decoded_token['csrf']):
+                    raise CSRFError(status_code=401,message="CSRF double submit tokens do not match")
 
-    def _verify_and_get_jwt_in_cookies(
+    def verify_and_get_jwt_in_cookies(
         self,
         type_token: str,
-        fresh: Optional[bool] = False
+        request: Union[Request,WebSocket],
+        csrf_token: Optional[str] = None,
+        fresh: Optional[bool] = False,
     ) -> "AuthJWT":
         """
         Check if cookies have a valid access or refresh token. if an token present in
-        cookies property _token will set. raises exception error when an access or refresh token
+        cookies, self._token will set. raises exception error when an access or refresh token
         is invalid and doesn't match with CSRF token double submit
 
         :param type_token: indicate token is access or refresh token
+        :param request: for identity get cookies from HTTP or WebSocket
+        :param csrf_token: get csrf token if a request from WebSocket
         :param fresh: check freshness token if True
         """
+        if type_token not in ['access','refresh']:
+            raise ValueError("type_token must be between 'access' or 'refresh'")
+        if not isinstance(request,(Request,WebSocket)):
+            raise TypeError("request must be an instance of 'Request' or 'WebSocket'")
+
         if type_token == 'access':
             cookie_key = self._access_cookie_key
-            cookie = self._request.cookies.get(cookie_key)
-            csrf_cookie = self._request.headers.get(self._access_csrf_header_name)
+            cookie = request.cookies.get(cookie_key)
+            if not isinstance(request, WebSocket):
+                csrf_token = request.headers.get(self._access_csrf_header_name)
         if type_token == 'refresh':
             cookie_key = self._refresh_cookie_key
-            cookie = self._request.cookies.get(cookie_key)
-            csrf_cookie = self._request.headers.get(self._refresh_csrf_header_name)
+            cookie = request.cookies.get(cookie_key)
+            if not isinstance(request, WebSocket):
+                csrf_token = request.headers.get(self._refresh_csrf_header_name)
 
         if not cookie:
             raise MissingCookieError(status_code=401,message="Missing cookie {}".format(cookie_key))
 
-        if self._cookie_csrf_protect and self._request.method in self._csrf_methods and not csrf_cookie:
-            raise CSRFError(status_code=401,message="Missing CSRF Token")
+        if self._cookie_csrf_protect and not csrf_token:
+            if isinstance(request, WebSocket) or request.method in self._csrf_methods:
+                raise CSRFError(status_code=401,message="Missing CSRF Token")
 
         # set token from cookie and verify jwt
         self._token = cookie
@@ -553,11 +567,12 @@ class AuthJWT(AuthConfig):
 
         decoded_token = self.get_raw_jwt()
 
-        if self._cookie_csrf_protect and self._request.method in self._csrf_methods and csrf_cookie:
-            if 'csrf' not in decoded_token:
-                raise JWTDecodeError(status_code=422,message="Missing claim: csrf")
-            if not hmac.compare_digest(csrf_cookie,decoded_token['csrf']):
-                raise CSRFError(status_code=401,message="CSRF double submit tokens do not match")
+        if self._cookie_csrf_protect and csrf_token:
+            if isinstance(request, WebSocket) or request.method in self._csrf_methods:
+                if 'csrf' not in decoded_token:
+                    raise JWTDecodeError(status_code=422,message="Missing claim: csrf")
+                if not hmac.compare_digest(csrf_token,decoded_token['csrf']):
+                    raise CSRFError(status_code=401,message="CSRF double submit tokens do not match")
 
     def verify_jwt_optional_in_request(self,token: str) -> None:
         """
@@ -565,8 +580,7 @@ class AuthJWT(AuthConfig):
 
         :param token: The encoded JWT
         """
-        if token:
-            self._verifying_token(token)
+        if token: self._verifying_token(token)
 
         if token and self.get_raw_jwt(token)['type'] != 'access':
             raise AccessTokenRequired(status_code=422,message="Only access tokens are allowed")
@@ -583,16 +597,19 @@ class AuthJWT(AuthConfig):
 
         :param token: The encoded JWT
         :param type_token: indicate token is access or refresh token
-        :param token_from: indicate token from headers or cookies
+        :param token_from: indicate token from headers cookies, websocket
         :param fresh: check freshness token if True
         """
-        issuer = self._decode_issuer if type_token == 'access' else None
-
-        if token:
-            self._verifying_token(token,issuer)
+        if type_token not in ['access','refresh']:
+            raise ValueError("type_token must be between 'access' or 'refresh'")
+        if token_from not in ['headers','cookies','websocket']:
+            raise ValueError("token_from must be between 'headers', 'cookies', 'websocket'")
 
         if not token and token_from == 'headers':
             raise MissingHeaderError(status_code=401,message="Missing {} Header".format(self._header_name))
+
+        issuer = self._decode_issuer if type_token == 'access' else None
+        self._verifying_token(token,issuer)
 
         if self.get_raw_jwt(token)['type'] != type_token:
             msg = "Only {} tokens are allowed".format(type_token)
@@ -656,12 +673,12 @@ class AuthJWT(AuthConfig):
             if self._token and self.jwt_in_headers:
                 self.verify_jwt_in_request(self._token,'access','headers')
             if not self._token and self.jwt_in_cookies:
-                self._verify_and_get_jwt_in_cookies('access')
+                self.verify_and_get_jwt_in_cookies('access',self._request)
         else:
             if self.jwt_in_headers:
                 self.verify_jwt_in_request(self._token,'access','headers')
             if self.jwt_in_cookies:
-                self._verify_and_get_jwt_in_cookies('access')
+                self.verify_and_get_jwt_in_cookies('access',self._request)
 
     def jwt_optional(self) -> None:
         """
@@ -673,12 +690,12 @@ class AuthJWT(AuthConfig):
             if self._token and self.jwt_in_headers:
                 self.verify_jwt_optional_in_request(self._token)
             if not self._token and self.jwt_in_cookies:
-                self._verify_and_get_jwt_optional_in_cookies()
+                self.verify_and_get_jwt_optional_in_cookies(self._request)
         else:
             if self.jwt_in_headers:
                 self.verify_jwt_optional_in_request(self._token)
             if self.jwt_in_cookies:
-                self._verify_and_get_jwt_optional_in_cookies()
+                self.verify_and_get_jwt_optional_in_cookies(self._request)
 
     def jwt_refresh_token_required(self) -> None:
         """
@@ -688,12 +705,12 @@ class AuthJWT(AuthConfig):
             if self._token and self.jwt_in_headers:
                 self.verify_jwt_in_request(self._token,'refresh','headers')
             if not self._token and self.jwt_in_cookies:
-                self._verify_and_get_jwt_in_cookies('refresh')
+                self.verify_and_get_jwt_in_cookies('refresh',self._request)
         else:
             if self.jwt_in_headers:
                 self.verify_jwt_in_request(self._token,'refresh','headers')
             if self.jwt_in_cookies:
-                self._verify_and_get_jwt_in_cookies('refresh')
+                self.verify_and_get_jwt_in_cookies('refresh',self._request)
 
     def fresh_jwt_required(self) -> None:
         """
@@ -703,12 +720,12 @@ class AuthJWT(AuthConfig):
             if self._token and self.jwt_in_headers:
                 self.verify_jwt_in_request(self._token,'access','headers',True)
             if not self._token and self.jwt_in_cookies:
-                self._verify_and_get_jwt_in_cookies('access',True)
+                self.verify_and_get_jwt_in_cookies('access',self._request,fresh=True)
         else:
             if self.jwt_in_headers:
                 self.verify_jwt_in_request(self._token,'access','headers',True)
             if self.jwt_in_cookies:
-                self._verify_and_get_jwt_in_cookies('access',True)
+                self.verify_and_get_jwt_in_cookies('access',self._request,fresh=True)
 
     def get_raw_jwt(self,encoded_token: Optional[str] = None) -> Optional[Dict[str,Union[str,int,bool]]]:
         """
