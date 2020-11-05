@@ -9,7 +9,10 @@ from fastapi_jwt_auth.exceptions import (
     CSRFError,
     JWTDecodeError,
     RevokedTokenError,
-    MissingTokenRequired
+    MissingTokenError,
+    AccessTokenRequired,
+    RefreshTokenRequired,
+    FreshTokenRequired
 )
 
 class AuthJWT(AuthConfig):
@@ -551,7 +554,7 @@ class AuthJWT(AuthConfig):
                 csrf_token = request.headers.get(self._refresh_csrf_header_name)
 
         if not cookie:
-            raise MissingTokenRequired(status_code=401,message="Missing cookie {}".format(cookie_key))
+            raise MissingTokenError(status_code=401,message="Missing cookie {}".format(cookie_key))
 
         if self._cookie_csrf_protect and not csrf_token:
             if isinstance(request, WebSocket) or request.method in self._csrf_methods:
@@ -579,7 +582,7 @@ class AuthJWT(AuthConfig):
         if token: self._verifying_token(token)
 
         if token and self.get_raw_jwt(token)['type'] != 'access':
-            raise MissingTokenRequired(status_code=422,message="Only access tokens are allowed")
+            raise AccessTokenRequired(status_code=422,message="Only access tokens are allowed")
 
     def verify_jwt_in_request(
         self,
@@ -603,9 +606,9 @@ class AuthJWT(AuthConfig):
 
         if not token:
             if token_from == 'headers':
-                raise MissingTokenRequired(status_code=401,message="Missing {} Header".format(self._header_name))
+                raise MissingTokenError(status_code=401,message="Missing {} Header".format(self._header_name))
             if token_from == 'websocket':
-                raise MissingTokenRequired(status_code=1008,message="Missing token from Query or Path")
+                raise MissingTokenError(status_code=1008,message="Missing token from Query or Path")
 
         # verify jwt
         issuer = self._decode_issuer if type_token == 'access' else None
@@ -613,10 +616,13 @@ class AuthJWT(AuthConfig):
 
         if self.get_raw_jwt(token)['type'] != type_token:
             msg = "Only {} tokens are allowed".format(type_token)
-            raise MissingTokenRequired(status_code=422,message=msg)
+            if type_token == 'access':
+                raise AccessTokenRequired(status_code=422,message=msg)
+            if type_token == 'refresh':
+                raise RefreshTokenRequired(status_code=422,message=msg)
 
         if fresh and not self.get_raw_jwt(token)['fresh']:
-            raise MissingTokenRequired(status_code=401,message="Fresh token required")
+            raise FreshTokenRequired(status_code=401,message="Fresh token required")
 
     def _verifying_token(self,encoded_token: str, issuer: Optional[str] = None) -> None:
         """
