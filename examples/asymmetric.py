@@ -5,7 +5,7 @@ from fastapi_jwt_auth.exceptions import AuthJWTException
 from pydantic import BaseModel
 
 # In the real case, you can put the
-# public key and private key in *.txt then you can read that file
+# public key and private key in *.pem, *.key then you can read that file
 private_key = """
 -----BEGIN RSA PRIVATE KEY-----
 MIICWwIBAAKBgGBoQhqHdMU65aSBQVC/u9a6HMfKA927aZOk7HA/kXuA5UU4Sl+U

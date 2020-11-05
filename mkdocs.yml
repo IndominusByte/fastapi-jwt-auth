@@ -8,10 +8,6 @@ theme:
 repo_name: IndominusByte/fastapi-jwt-auth
 repo_url: https://github.com/IndominusByte/fastapi-jwt-auth
 
-google_analytics:
-  - G-P08KBZV1K6
-  - auto
-
 markdown_extensions:
   - markdown_include.include:
       base_path: docs

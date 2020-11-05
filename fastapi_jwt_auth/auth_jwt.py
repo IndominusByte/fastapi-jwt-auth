@@ -222,7 +222,7 @@ class AuthJWT(AuthConfig):
         expires_time: Optional[Union[timedelta,int,bool]] = None
     ) -> Union[None,int]:
         """
-        Dynamic token expired if expires_time is False exp claim not created
+        Dynamic token expired, if expires_time is False exp claim not created
 
         :param type_token: indicate token is access_token or refresh_token
         :param expires_time: duration expired jwt
@@ -482,7 +482,7 @@ class AuthJWT(AuthConfig):
                 domain=self._cookie_domain
             )
 
-    def verify_and_get_jwt_optional_in_cookies(
+    def _verify_and_get_jwt_optional_in_cookies(
         self,
         request: Union[Request,WebSocket],
         csrf_token: Optional[str] = None,
@@ -490,10 +490,10 @@ class AuthJWT(AuthConfig):
         """
         Optionally check if cookies have a valid access token. if an access token present in
         cookies, self._token will set. raises exception error when an access token is invalid
-        and doesn't match with CSRF token double submit
+        or doesn't match with CSRF token double submit
 
         :param request: for identity get cookies from HTTP or WebSocket
-        :param csrf_token: get csrf token if a request from WebSocket
+        :param csrf_token: the CSRF double submit token
         """
         if not isinstance(request,(Request,WebSocket)):
             raise TypeError("request must be an instance of 'Request' or 'WebSocket'")
@@ -509,7 +509,7 @@ class AuthJWT(AuthConfig):
 
         # set token from cookie and verify jwt
         self._token = cookie
-        self.verify_jwt_optional_in_request(self._token)
+        self._verify_jwt_optional_in_request(self._token)
 
         decoded_token = self.get_raw_jwt()
 
@@ -520,7 +520,7 @@ class AuthJWT(AuthConfig):
                 if not hmac.compare_digest(csrf_token,decoded_token['csrf']):
                     raise CSRFError(status_code=401,message="CSRF double submit tokens do not match")
 
-    def verify_and_get_jwt_in_cookies(
+    def _verify_and_get_jwt_in_cookies(
         self,
         type_token: str,
         request: Union[Request,WebSocket],
@@ -530,11 +530,11 @@ class AuthJWT(AuthConfig):
         """
         Check if cookies have a valid access or refresh token. if an token present in
         cookies, self._token will set. raises exception error when an access or refresh token
-        is invalid and doesn't match with CSRF token double submit
+        is invalid or doesn't match with CSRF token double submit
 
         :param type_token: indicate token is access or refresh token
         :param request: for identity get cookies from HTTP or WebSocket
-        :param csrf_token: get csrf token if a request from WebSocket
+        :param csrf_token: the CSRF double submit token
         :param fresh: check freshness token if True
         """
         if type_token not in ['access','refresh']:
@@ -562,7 +562,7 @@ class AuthJWT(AuthConfig):
 
         # set token from cookie and verify jwt
         self._token = cookie
-        self.verify_jwt_in_request(self._token,type_token,'cookies',fresh)
+        self._verify_jwt_in_request(self._token,type_token,'cookies',fresh)
 
         decoded_token = self.get_raw_jwt()
 
@@ -573,7 +573,7 @@ class AuthJWT(AuthConfig):
                 if not hmac.compare_digest(csrf_token,decoded_token['csrf']):
                     raise CSRFError(status_code=401,message="CSRF double submit tokens do not match")
 
-    def verify_jwt_optional_in_request(self,token: str) -> None:
+    def _verify_jwt_optional_in_request(self,token: str) -> None:
         """
         Optionally check if this request has a valid access token
 
@@ -584,7 +584,7 @@ class AuthJWT(AuthConfig):
         if token and self.get_raw_jwt(token)['type'] != 'access':
             raise AccessTokenRequired(status_code=422,message="Only access tokens are allowed")
 
-    def verify_jwt_in_request(
+    def _verify_jwt_in_request(
         self,
         token: str,
         type_token: str,
@@ -670,8 +670,7 @@ class AuthJWT(AuthConfig):
 
     def jwt_required(
         self,
-        websocket_auth: Optional[bool] = False,
-        websocket_from: Optional[str] = "query_path",
+        auth_from: str = "request",
         token: Optional[str] = None,
         websocket: Optional[WebSocket] = None,
         csrf_token: Optional[str] = None,
@@ -679,76 +678,129 @@ class AuthJWT(AuthConfig):
         """
         Only access token can access this function
 
-        :param websocket_auth:
-        :param websocket_from:
-        :param token:
-        :param websocket:
-        :param csrf_token:
+        :param auth_from: for identity get token from HTTP or WebSocket
+        :param token: the encoded JWT, it's required if the protected endpoint use WebSocket to
+                      authorization and get token from Query Url or Path
+        :param websocket: an instance of WebSocket, it's required if protected endpoint use a cookie to authorization
+        :param csrf_token: the CSRF double submit token. since WebSocket cannot add specifying additional headers
+                           its must be passing csrf_token manually and can achieve by Query Url or Path
         """
-        if websocket_auth:
-            if websocket_from == "query_path":
-                self.verify_jwt_in_request(token,'access','websocket')
-            if websocket_from == "cookies":
-                self.verify_and_get_jwt_in_cookies('access',websocket,csrf_token)
-            return
+        if auth_from == "websocket":
+            if websocket: self._verify_and_get_jwt_in_cookies('access',websocket,csrf_token)
+            else: self._verify_jwt_in_request(token,'access','websocket')
 
-        if len(self._token_location) == 2:
-            if self._token and self.jwt_in_headers:
-                self.verify_jwt_in_request(self._token,'access','headers')
-            if not self._token and self.jwt_in_cookies:
-                self.verify_and_get_jwt_in_cookies('access',self._request)
-        else:
-            if self.jwt_in_headers:
-                self.verify_jwt_in_request(self._token,'access','headers')
-            if self.jwt_in_cookies:
-                self.verify_and_get_jwt_in_cookies('access',self._request)
+        if auth_from == "request":
+            if len(self._token_location) == 2:
+                if self._token and self.jwt_in_headers:
+                    self._verify_jwt_in_request(self._token,'access','headers')
+                if not self._token and self.jwt_in_cookies:
+                    self._verify_and_get_jwt_in_cookies('access',self._request)
+            else:
+                if self.jwt_in_headers:
+                    self._verify_jwt_in_request(self._token,'access','headers')
+                if self.jwt_in_cookies:
+                    self._verify_and_get_jwt_in_cookies('access',self._request)
 
-    def jwt_optional(self) -> None:
+    def jwt_optional(
+        self,
+        auth_from: str = "request",
+        token: Optional[str] = None,
+        websocket: Optional[WebSocket] = None,
+        csrf_token: Optional[str] = None,
+    ) -> None:
         """
         If an access token in present in the request you can get data from get_raw_jwt() or get_jwt_subject(),
         If no access token is present in the request, this endpoint will still be called, but
         get_raw_jwt() or get_jwt_subject() will return None
-        """
-        if len(self._token_location) == 2:
-            if self._token and self.jwt_in_headers:
-                self.verify_jwt_optional_in_request(self._token)
-            if not self._token and self.jwt_in_cookies:
-                self.verify_and_get_jwt_optional_in_cookies(self._request)
-        else:
-            if self.jwt_in_headers:
-                self.verify_jwt_optional_in_request(self._token)
-            if self.jwt_in_cookies:
-                self.verify_and_get_jwt_optional_in_cookies(self._request)
 
-    def jwt_refresh_token_required(self) -> None:
+        :param auth_from: for identity get token from HTTP or WebSocket
+        :param token: the encoded JWT, it's required if the protected endpoint use WebSocket to
+                      authorization and get token from Query Url or Path
+        :param websocket: an instance of WebSocket, it's required if protected endpoint use a cookie to authorization
+        :param csrf_token: the CSRF double submit token. since WebSocket cannot add specifying additional headers
+                           its must be passing csrf_token manually and can achieve by Query Url or Path
+        """
+        if auth_from == "websocket":
+            if websocket: self._verify_and_get_jwt_optional_in_cookies(websocket,csrf_token)
+            else: self._verify_jwt_optional_in_request(token)
+
+        if auth_from == "request":
+            if len(self._token_location) == 2:
+                if self._token and self.jwt_in_headers:
+                    self._verify_jwt_optional_in_request(self._token)
+                if not self._token and self.jwt_in_cookies:
+                    self._verify_and_get_jwt_optional_in_cookies(self._request)
+            else:
+                if self.jwt_in_headers:
+                    self._verify_jwt_optional_in_request(self._token)
+                if self.jwt_in_cookies:
+                    self._verify_and_get_jwt_optional_in_cookies(self._request)
+
+    def jwt_refresh_token_required(
+        self,
+        auth_from: str = "request",
+        token: Optional[str] = None,
+        websocket: Optional[WebSocket] = None,
+        csrf_token: Optional[str] = None,
+    ) -> None:
         """
         This function will ensure that the requester has a valid refresh token
-        """
-        if len(self._token_location) == 2:
-            if self._token and self.jwt_in_headers:
-                self.verify_jwt_in_request(self._token,'refresh','headers')
-            if not self._token and self.jwt_in_cookies:
-                self.verify_and_get_jwt_in_cookies('refresh',self._request)
-        else:
-            if self.jwt_in_headers:
-                self.verify_jwt_in_request(self._token,'refresh','headers')
-            if self.jwt_in_cookies:
-                self.verify_and_get_jwt_in_cookies('refresh',self._request)
 
-    def fresh_jwt_required(self) -> None:
+        :param auth_from: for identity get token from HTTP or WebSocket
+        :param token: the encoded JWT, it's required if the protected endpoint use WebSocket to
+                      authorization and get token from Query Url or Path
+        :param websocket: an instance of WebSocket, it's required if protected endpoint use a cookie to authorization
+        :param csrf_token: the CSRF double submit token. since WebSocket cannot add specifying additional headers
+                           its must be passing csrf_token manually and can achieve by Query Url or Path
+        """
+        if auth_from == "websocket":
+            if websocket: self._verify_and_get_jwt_in_cookies('refresh',websocket,csrf_token)
+            else: self._verify_jwt_in_request(token,'refresh','websocket')
+
+        if auth_from == "request":
+            if len(self._token_location) == 2:
+                if self._token and self.jwt_in_headers:
+                    self._verify_jwt_in_request(self._token,'refresh','headers')
+                if not self._token and self.jwt_in_cookies:
+                    self._verify_and_get_jwt_in_cookies('refresh',self._request)
+            else:
+                if self.jwt_in_headers:
+                    self._verify_jwt_in_request(self._token,'refresh','headers')
+                if self.jwt_in_cookies:
+                    self._verify_and_get_jwt_in_cookies('refresh',self._request)
+
+    def fresh_jwt_required(
+        self,
+        auth_from: str = "request",
+        token: Optional[str] = None,
+        websocket: Optional[WebSocket] = None,
+        csrf_token: Optional[str] = None,
+    ) -> None:
         """
         This function will ensure that the requester has a valid access token and fresh token
+
+        :param auth_from: for identity get token from HTTP or WebSocket
+        :param token: the encoded JWT, it's required if the protected endpoint use WebSocket to
+                      authorization and get token from Query Url or Path
+        :param websocket: an instance of WebSocket, it's required if protected endpoint use a cookie to authorization
+        :param csrf_token: the CSRF double submit token. since WebSocket cannot add specifying additional headers
+                           its must be passing csrf_token manually and can achieve by Query Url or Path
         """
-        if len(self._token_location) == 2:
-            if self._token and self.jwt_in_headers:
-                self.verify_jwt_in_request(self._token,'access','headers',True)
-            if not self._token and self.jwt_in_cookies:
-                self.verify_and_get_jwt_in_cookies('access',self._request,fresh=True)
-        else:
-            if self.jwt_in_headers:
-                self.verify_jwt_in_request(self._token,'access','headers',True)
-            if self.jwt_in_cookies:
-                self.verify_and_get_jwt_in_cookies('access',self._request,fresh=True)
+        if auth_from == "websocket":
+            if websocket: self._verify_and_get_jwt_in_cookies('access',websocket,csrf_token,True)
+            else: self._verify_jwt_in_request(token,'access','websocket',True)
+
+        if auth_from == "request":
+            if len(self._token_location) == 2:
+                if self._token and self.jwt_in_headers:
+                    self._verify_jwt_in_request(self._token,'access','headers',True)
+                if not self._token and self.jwt_in_cookies:
+                    self._verify_and_get_jwt_in_cookies('access',self._request,fresh=True)
+            else:
+                if self.jwt_in_headers:
+                    self._verify_jwt_in_request(self._token,'access','headers',True)
+                if self.jwt_in_cookies:
+                    self._verify_and_get_jwt_in_cookies('access',self._request,fresh=True)
 
     def get_raw_jwt(self,encoded_token: Optional[str] = None) -> Optional[Dict[str,Union[str,int,bool]]]:
         """
