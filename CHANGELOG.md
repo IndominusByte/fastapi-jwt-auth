@@ -1,3 +1,7 @@
+## 0.5.0
+* Support for WebSocket authorization *(Thanks to @SelfhostedPro for make issues)*
+* Function **get_raw_jwt()** can pass parameter encoded_token
+
 ## 0.4.0
 * Support set and unset cookies when returning a **Response** directly
 
@@ -22,7 +26,7 @@
 * Custom error message key and status code
 * JWT in cookies *(Thanks to @m4nuC for make issues)*
 * Add Additional claims
-* Add Documentation *(#9 by @paulussimanjuntak)*
+* Add Documentation PR #9 by @paulussimanjuntak
 
 ## 0.2.0
 

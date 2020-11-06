@@ -43,6 +43,7 @@ nav:
     - Asymmetric Algorithm: advanced-usage/asymmetric.md
     - Dynamic Token Expires: advanced-usage/dynamic-expires.md
     - Dynamic Token Algorithm: advanced-usage/dynamic-algorithm.md
+    - WebSocket Protecting: advanced-usage/websocket.md
     - Bigger Applications: advanced-usage/bigger-app.md
     - Generate Documentation: advanced-usage/generate-docs.md
   - Configuration Options:
