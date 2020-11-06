@@ -6,8 +6,6 @@ from datetime import timedelta
 class AuthConfig:
     _token = None
     _token_location = {'headers'}
-    _response = None
-    _request = None
 
     _secret_key = None
     _public_key = None

@@ -116,6 +116,9 @@ def test_get_raw_token(client,default_access_token,encoded_token):
     assert response.status_code == 200
     assert response.json() == default_access_token
 
+def test_get_raw_jwt(default_access_token,encoded_token,Authorize):
+    assert Authorize.get_raw_jwt(encoded_token) == default_access_token
+
 def test_get_jwt_jti(client,default_access_token,encoded_token,Authorize):
     assert Authorize.get_jti(encoded_token=encoded_token) == default_access_token['jti']
 

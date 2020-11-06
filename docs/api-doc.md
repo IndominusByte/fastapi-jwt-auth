@@ -18,11 +18,20 @@ In here you will find the API for everything exposed in this extension.
 
 ### Protected Endpoint
 
-**jwt_required**()
+**jwt_required**(auth_from="request", token=None, websocket=None, csrf_token=None)
 :   *If you call this function, it will ensure that the requester has a valid access token before
     executing the code below your router. This does not check the freshness of the access token.*
 
-**jwt_optional**()
+    * Parameters:
+        * **auth_from**: For identity get token from HTTP or WebSocket
+        * **token**: The encoded JWT, it's required if the protected endpoint use WebSocket to
+                     authorization and get token from Query Url or Path
+        * **websocket**: An instance of WebSocket, it's required if protected endpoint use a cookie to authorization
+        * **csrf_token**: The CSRF double submit token. Since WebSocket cannot add specifying additional headers
+                          its must be passing csrf_token manually and can achieve by Query Url or Path
+    * Returns: None
+
+**jwt_optional**(auth_from="request", token=None, websocket=None, csrf_token=None)
 :   *If an access token present in the request, this will call the endpoint with `get_jwt_identity()`
     having the identity of the access token. If no access token is present in the request, this endpoint
     will still be called, but `get_jwt_identity()` will return None instead.*
@@ -30,13 +39,40 @@ In here you will find the API for everything exposed in this extension.
     *If there is an invalid access token in the request (expired, tampered with, etc),
     this will still call the appropriate error handler.*
 
-**jwt_refresh_token_required**()
+    * Parameters:
+        * **auth_from**: For identity get token from HTTP or WebSocket
+        * **token**: The encoded JWT, it's required if the protected endpoint use WebSocket to
+                     authorization and get token from Query Url or Path
+        * **websocket**: An instance of WebSocket, it's required if protected endpoint use a cookie to authorization
+        * **csrf_token**: The CSRF double submit token. Since WebSocket cannot add specifying additional headers
+                          its must be passing csrf_token manually and can achieve by Query Url or Path
+    * Returns: None
+
+**jwt_refresh_token_required**(auth_from="request", token=None, websocket=None, csrf_token=None)
 :   *If you call this function, it will ensure that the requester has a valid refresh token before
     executing the code below your router.*
 
-**fresh_jwt_required**()
+    * Parameters:
+        * **auth_from**: For identity get token from HTTP or WebSocket
+        * **token**: The encoded JWT, it's required if the protected endpoint use WebSocket to
+                     authorization and get token from Query Url or Path
+        * **websocket**: An instance of WebSocket, it's required if protected endpoint use a cookie to authorization
+        * **csrf_token**: The CSRF double submit token. Since WebSocket cannot add specifying additional headers
+                          its must be passing csrf_token manually and can achieve by Query Url or Path
+    * Returns: None
+
+**fresh_jwt_required**(auth_from="request", token=None, websocket=None, csrf_token=None)
 :   *If you call this function, it will ensure that the requester has a valid and fresh access token before
     executing the code below your router.*
+
+    * Parameters:
+        * **auth_from**: For identity get token from HTTP or WebSocket
+        * **token**: The encoded JWT, it's required if the protected endpoint use WebSocket to
+                     authorization and get token from Query Url or Path
+        * **websocket**: An instance of WebSocket, it's required if protected endpoint use a cookie to authorization
+        * **csrf_token**: The CSRF double submit token. Since WebSocket cannot add specifying additional headers
+                          its must be passing csrf_token manually and can achieve by Query Url or Path
+    * Returns: None
 
 ### Utilities
 
@@ -106,9 +142,13 @@ In here you will find the API for everything exposed in this extension.
         * **response**: The FastAPI response object to delete the refresh cookies in
     * Returns: None
 
-**get_raw_jwt**()
+**get_raw_jwt**(encoded_token=None)
 :   *This will return the python dictionary which has all of the claims of the JWT that is accessing the endpoint.
     If no JWT is currently present, return `None` instead.*
+
+    * Parameters:
+        * **encoded_token**: The encoded JWT from parameter
+    * Returns: Claims of JWT
 
 **get_jti**(encoded_token)
 :   *Returns the JTI (unique identifier) of an encoded JWT*

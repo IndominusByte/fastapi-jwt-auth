@@ -6,23 +6,7 @@ class AuthJWTException(Exception):
 
 class InvalidHeaderError(AuthJWTException):
     """
-    An error getting header information from a request
-    """
-    def __init__(self,status_code: int, message: str):
-        self.status_code = status_code
-        self.message = message
-
-class MissingHeaderError(AuthJWTException):
-    """
-    Error raised when <HeaderName> not found in the header
-    """
-    def __init__(self,status_code: int, message: str):
-        self.status_code = status_code
-        self.message = message
-
-class MissingCookieError(AuthJWTException):
-    """
-    Error raised when token not found in cookie
+    An error getting jwt in header or jwt header information from a request
     """
     def __init__(self,status_code: int, message: str):
         self.status_code = status_code
@@ -39,6 +23,14 @@ class JWTDecodeError(AuthJWTException):
 class CSRFError(AuthJWTException):
     """
     An error with CSRF protection
+    """
+    def __init__(self,status_code: int, message: str):
+        self.status_code = status_code
+        self.message = message
+
+class MissingTokenError(AuthJWTException):
+    """
+    Error raised when token not found
     """
     def __init__(self,status_code: int, message: str):
         self.status_code = status_code

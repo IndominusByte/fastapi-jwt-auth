@@ -21,6 +21,7 @@ FastAPI extension that provides JWT Auth support (secure, easy to use and lightw
 - Access tokens and refresh tokens
 - Freshness Tokens
 - Revoking Tokens
+- Support for WebSocket authorization
 - Support for adding custom claims to JSON Web Tokens
 - Storing tokens in cookies and CSRF protection
 

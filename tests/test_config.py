@@ -20,8 +20,6 @@ def client():
 def test_default_config():
     assert AuthJWT._token is None
     assert AuthJWT._token_location == {'headers'}
-    assert AuthJWT._response is None
-    assert AuthJWT._request is None
     assert AuthJWT._secret_key is None
     assert AuthJWT._public_key is None
     assert AuthJWT._private_key is None
