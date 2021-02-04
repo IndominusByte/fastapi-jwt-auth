@@ -36,6 +36,18 @@ class AuthJWT(AuthConfig):
                 auth = req.headers.get(self._header_name.lower())
                 if auth: self._get_jwt_from_headers(auth)
 
+    def get_request(self):
+        """
+        Get incoming request
+        """
+        return self._request
+
+    def get_response(self):
+        """
+        Get response from endpoint
+        """
+        return self._response
+
     def _get_jwt_from_headers(self,auth: str) -> "AuthJWT":
         """
         Get token from the headers
