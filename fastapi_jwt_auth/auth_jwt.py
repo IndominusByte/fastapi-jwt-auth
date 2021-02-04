@@ -12,7 +12,8 @@ from fastapi_jwt_auth.exceptions import (
     MissingTokenError,
     AccessTokenRequired,
     RefreshTokenRequired,
-    FreshTokenRequired
+    FreshTokenRequired,
+    NotEnoughPermissions
 )
 
 class AuthJWT(AuthConfig):
@@ -35,6 +36,8 @@ class AuthJWT(AuthConfig):
             if self.jwt_in_headers:
                 auth = req.headers.get(self._header_name.lower())
                 if auth: self._get_jwt_from_headers(auth)
+
+        self._required_scopes = []
 
     def _get_jwt_from_headers(self,auth: str) -> "AuthJWT":
         """
@@ -635,6 +638,8 @@ class AuthJWT(AuthConfig):
         if raw_token['type'] in self._denylist_token_checks:
             self._check_token_is_revoked(raw_token)
 
+        self._verifying_scopes(raw_token)
+
     def _verified_token(self,encoded_token: str, issuer: Optional[str] = None) -> Dict[str,Union[str,int,bool]]:
         """
         Verified token and catch all error from jwt package and return decode token
@@ -668,12 +673,23 @@ class AuthJWT(AuthConfig):
         except Exception as err:
             raise JWTDecodeError(status_code=422,message=str(err))
 
+    def _verifying_scopes(self, raw_token: dict) -> None:
+        #decoded_token = self.get_raw_jwt(encoded_token=token)
+        token_scopes = raw_token["scopes"] or []
+
+        if len(self._required_scopes)>0:
+            for scope in self._required_scopes:
+                if scope not in token_scopes:
+                    raise NotEnoughPermissions(status_code=401, message="Not enough permissions")
+
+
     def jwt_required(
         self,
         auth_from: str = "request",
         token: Optional[str] = None,
         websocket: Optional[WebSocket] = None,
         csrf_token: Optional[str] = None,
+        scopes: list=[]
     ) -> None:
         """
         Only access token can access this function
@@ -685,9 +701,12 @@ class AuthJWT(AuthConfig):
         :param csrf_token: the CSRF double submit token. since WebSocket cannot add specifying additional headers
                            its must be passing csrf_token manually and can achieve by Query Url or Path
         """
+        self._required_scopes = scopes
+
         if auth_from == "websocket":
             if websocket: self._verify_and_get_jwt_in_cookies('access',websocket,csrf_token)
             else: self._verify_jwt_in_request(token,'access','websocket')
+
 
         if auth_from == "request":
             if len(self._token_location) == 2:
@@ -700,6 +719,8 @@ class AuthJWT(AuthConfig):
                     self._verify_jwt_in_request(self._token,'access','headers')
                 if self.jwt_in_cookies:
                     self._verify_and_get_jwt_in_cookies('access',self._request)
+        
+
 
     def jwt_optional(
         self,
@@ -707,6 +728,7 @@ class AuthJWT(AuthConfig):
         token: Optional[str] = None,
         websocket: Optional[WebSocket] = None,
         csrf_token: Optional[str] = None,
+        scopes: list=[]
     ) -> None:
         """
         If an access token in present in the request you can get data from get_raw_jwt() or get_jwt_subject(),
@@ -720,6 +742,8 @@ class AuthJWT(AuthConfig):
         :param csrf_token: the CSRF double submit token. since WebSocket cannot add specifying additional headers
                            its must be passing csrf_token manually and can achieve by Query Url or Path
         """
+        self._required_scopes = scopes
+
         if auth_from == "websocket":
             if websocket: self._verify_and_get_jwt_optional_in_cookies(websocket,csrf_token)
             else: self._verify_jwt_optional_in_request(token)
@@ -742,6 +766,7 @@ class AuthJWT(AuthConfig):
         token: Optional[str] = None,
         websocket: Optional[WebSocket] = None,
         csrf_token: Optional[str] = None,
+        scopes: list=[]
     ) -> None:
         """
         This function will ensure that the requester has a valid refresh token
@@ -753,6 +778,8 @@ class AuthJWT(AuthConfig):
         :param csrf_token: the CSRF double submit token. since WebSocket cannot add specifying additional headers
                            its must be passing csrf_token manually and can achieve by Query Url or Path
         """
+        self._required_scopes = scopes
+
         if auth_from == "websocket":
             if websocket: self._verify_and_get_jwt_in_cookies('refresh',websocket,csrf_token)
             else: self._verify_jwt_in_request(token,'refresh','websocket')
@@ -775,6 +802,7 @@ class AuthJWT(AuthConfig):
         token: Optional[str] = None,
         websocket: Optional[WebSocket] = None,
         csrf_token: Optional[str] = None,
+        scopes: list=[]
     ) -> None:
         """
         This function will ensure that the requester has a valid access token and fresh token
@@ -786,6 +814,8 @@ class AuthJWT(AuthConfig):
         :param csrf_token: the CSRF double submit token. since WebSocket cannot add specifying additional headers
                            its must be passing csrf_token manually and can achieve by Query Url or Path
         """
+        self._required_scopes = scopes
+
         if auth_from == "websocket":
             if websocket: self._verify_and_get_jwt_in_cookies('access',websocket,csrf_token,True)
             else: self._verify_jwt_in_request(token,'access','websocket',True)
