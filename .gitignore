@@ -34,3 +34,8 @@ htmlcov/
 
 # testing py
 test.py
+
+#Pycharm
+.idea
+.idea/
+.idea/*
