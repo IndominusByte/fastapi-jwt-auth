@@ -5,12 +5,13 @@ from pydantic import (
     validator,
     StrictBool,
     StrictInt,
-    StrictStr
+    StrictStr,
+    StrictBytes
 )
 
 class LoadConfig(BaseModel):
     authjwt_token_location: Optional[Sequence[StrictStr]] = {'headers'}
-    authjwt_secret_key: Optional[StrictStr] = None
+    authjwt_secret_key: Optional[Union[StrictStr,StrictBytes]] = None
     authjwt_public_key: Optional[StrictStr] = None
     authjwt_private_key: Optional[StrictStr] = None
     authjwt_algorithm: Optional[StrictStr] = "HS256"
