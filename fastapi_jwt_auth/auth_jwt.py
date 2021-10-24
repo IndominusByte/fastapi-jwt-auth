@@ -186,12 +186,14 @@ class AuthJWT(AuthConfig):
         except Exception:
             raise
 
-        return jwt.encode(
+        token = jwt.encode(
             {**reserved_claims, **custom_claims, **user_claims},
             secret_key,
             algorithm=algorithm,
             headers=headers
-        ).decode('utf-8')
+        )
+
+        return token if type(token) == str else token.decode('utf-8')
 
     def _has_token_in_denylist_callback(self) -> bool:
         """
