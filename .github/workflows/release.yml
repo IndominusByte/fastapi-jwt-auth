@@ -20,4 +20,4 @@ jobs:
       env:
         FLIT_PASSWORD: ${{ secrets.FLIT_PASSWORD }}
         FLIT_USERNAME: ${{ secrets.FLIT_USERNAME }}
-      run: flit publish
+      run: flit publish --repository pypi
