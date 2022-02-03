@@ -7,7 +7,6 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    environment: pypi
     steps:
     - uses: actions/checkout@v2
     - uses: actions/setup-python@v2
@@ -17,5 +16,8 @@ jobs:
       run: flit install --symlink
     - name: Test
       run: bash scripts/tests.sh
-    - name: Build package, and upload to PyPI
+    - name: Build package, and upload to PyPI      
+      env:
+        FLIT_PASSWORD: ${{ secrets.FLIT_PASSWORD }}
+        FLIT_USERNAME: ${{ secrets.FLIT_USERNAME }}
       run: flit publish
