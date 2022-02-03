@@ -2,14 +2,12 @@
 requires = ["flit_core >=3.2,<4"]
 build-backend = "flit_core.buildapi"
 
-[project]
-name = "async-fastapi-jwt-auth"
-authors = [{name = "Yan Khachko", email = "a@slnk.icu"}]
-dynamic = ["version", "description"]
-
-
-[project.urls]
-Home = "https://github.com/sijokun/async-fastapi-jwt-auth"
+[tool.flit.metadata]
+module = "async_fastapi_jwt_auth"
+dist-name = "async-fastapi-jwt-auth"
+author = "Yan Khachko"
+author-email = "a@slnk.icu"
+home-page = "https://github.com/sijokun/async-fastapi-jwt-auth"
 
 classifiers = [
   "Environment :: Web Environment",
@@ -30,7 +28,7 @@ requires = [
 ]
 
 description-file = "README.md"
-requires-python = ">=3.6"
+requires-python = ">=3.7"
 
 [tool.flit.metadata.urls]
 Documentation = "https://sijokun.github.io/async-fastapi-jwt-auth/"
