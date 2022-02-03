@@ -1,3 +1,6 @@
+## Async fork 0.5.0
+* Now you can use this lib with async!
+
 ## 0.5.0
 * Support for WebSocket authorization *(Thanks to @SelfhostedPro for make issues)*
 * Function **get_raw_jwt()** can pass parameter encoded_token

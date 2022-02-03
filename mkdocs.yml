@@ -1,12 +1,12 @@
-site_name: FastAPI JWT Auth
+site_name: Async FastAPI JWT Auth
 site_description: FastAPI extension that provides JWT Auth support (secure, easy to use, and lightweight)
 theme:
   name: material
   palette:
     primary: black
 
-repo_name: IndominusByte/fastapi-jwt-auth
-repo_url: https://github.com/IndominusByte/fastapi-jwt-auth
+repo_name: sijokun/async-fastapi-jwt-auth
+repo_url: https://github.com/sijokun/async-fastapi-jwt-auth
 
 markdown_extensions:
   - markdown_include.include:
@@ -16,8 +16,8 @@ markdown_extensions:
   - pymdownx.highlight:
       linenums_style: pymdownx.inline
   - pymdownx.magiclink:
-      user: IndominusByte
-      repo: fastapi-jwt-auth
+      user: sijokun
+      repo: async-fastapi-jwt-auth
       repo_url_shorthand: true
   - pymdownx.emoji:
       emoji_index: !!python/name:pymdownx.emoji.twemoji

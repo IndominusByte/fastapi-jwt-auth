@@ -8,15 +8,19 @@
 [![Downloads](https://static.pepy.tech/personalized-badge/async-fastapi-jwt-auth?period=total&units=international_system&left_color=grey&right_color=brightgreen&left_text=Downloads)](https://pepy.tech/project/async-fastapi-jwt-auth)
 
 ---
-Orogonal lib:
+
+Original lib:
+
 **Documentation**: <a href="https://indominusbyte.github.io/fastapi-jwt-auth" target="_blank">https://indominusbyte.github.io/fastapi-jwt-auth</a>
 
 **Source Code**: <a href="https://github.com/IndominusByte/fastapi-jwt-auth" target="_blank">https://github.com/IndominusByte/fastapi-jwt-auth</a>
 
 Async fork:
+
 **Documentation**: <a href="https://sijokun.github.io/async-fastapi-jwt-auth" target="_blank">https://sijokun.github.io/async-fastapi-jwt-auth</a>
 
 **Source Code**: <a href="https://github.com/sijokun/async-fastapi-jwt-auth" target="_blank">https://github.com/sijokun/async-fastapi-jwt-auth/</a>
+
 ---
 
 ## Features
