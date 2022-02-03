@@ -1,6 +1,6 @@
 Create a file `basic.py`:
 
-```python hl_lines="16 19-21 25-30 36 41 47-48 50"
+```python hl_lines="18 22-24 29-34 41 46 52-54 56"
 {!../examples/basic.py!}
 ```
 

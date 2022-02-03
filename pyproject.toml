@@ -23,8 +23,8 @@ classifiers = [
 ]
 
 requires = [
-  "fastapi>=0.61.0",
-  "PyJWT>=1.7.1,<2.0.0"
+  "fastapi>=0.73.0",
+  "PyJWT>=2.3.0"
 ]
 
 description-file = "README.md"
