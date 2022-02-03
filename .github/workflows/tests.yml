@@ -27,4 +27,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           coveralls --service=github
+      - name: Upload packag to PyPI
+        run: flit publish
           
