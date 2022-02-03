@@ -1,0 +1,21 @@
+name: Upload Python Package
+
+on:
+  release:
+    types: [created]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-python@v2
+    - name: Install Flit
+      run: pip install flit
+    - name: Install Dependencies
+      run: flit install --symlink
+    - name: Test
+      run: bash scripts/tests.sh
+    - name: Build package, and upload to PyPI
+      run: flit publish
