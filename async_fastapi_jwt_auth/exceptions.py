@@ -2,9 +2,10 @@ class AuthJWTException(Exception):
     """
     Base except which all fastapi_jwt_auth errors extend
     """
-    status_code: int = 400
-    message: str = ''
-    pass
+    
+    def __init__(self, status_code: int, message: str):
+        self.status_code = status_code
+        self.message = message
 
 
 class InvalidHeaderError(AuthJWTException):
@@ -12,9 +13,7 @@ class InvalidHeaderError(AuthJWTException):
     An error getting jwt in header or jwt header information from a request
     """
 
-    def __init__(self, status_code: int, message: str):
-        self.status_code = status_code
-        self.message = message
+    pass
 
 
 class JWTDecodeError(AuthJWTException):
@@ -22,9 +21,7 @@ class JWTDecodeError(AuthJWTException):
     An error decoding a JWT
     """
 
-    def __init__(self, status_code: int, message: str):
-        self.status_code = status_code
-        self.message = message
+    pass
 
 
 class CSRFError(AuthJWTException):
@@ -32,9 +29,7 @@ class CSRFError(AuthJWTException):
     An error with CSRF protection
     """
 
-    def __init__(self, status_code: int, message: str):
-        self.status_code = status_code
-        self.message = message
+    pass
 
 
 class MissingTokenError(AuthJWTException):
@@ -42,9 +37,7 @@ class MissingTokenError(AuthJWTException):
     Error raised when token not found
     """
 
-    def __init__(self, status_code: int, message: str):
-        self.status_code = status_code
-        self.message = message
+    pass
 
 
 class RevokedTokenError(AuthJWTException):
@@ -52,9 +45,7 @@ class RevokedTokenError(AuthJWTException):
     Error raised when a revoked token attempt to access a protected endpoint
     """
 
-    def __init__(self, status_code: int, message: str):
-        self.status_code = status_code
-        self.message = message
+    pass
 
 
 class AccessTokenRequired(AuthJWTException):
@@ -63,9 +54,7 @@ class AccessTokenRequired(AuthJWTException):
     protected by jwt_required, jwt_optional, fresh_jwt_required
     """
 
-    def __init__(self, status_code: int, message: str):
-        self.status_code = status_code
-        self.message = message
+    pass
 
 
 class RefreshTokenRequired(AuthJWTException):
@@ -74,9 +63,7 @@ class RefreshTokenRequired(AuthJWTException):
     protected by jwt_refresh_token_required
     """
 
-    def __init__(self, status_code: int, message: str):
-        self.status_code = status_code
-        self.message = message
+    pass
 
 
 class FreshTokenRequired(AuthJWTException):
@@ -85,6 +72,4 @@ class FreshTokenRequired(AuthJWTException):
     protected by fresh_jwt_required
     """
 
-    def __init__(self, status_code: int, message: str):
-        self.status_code = status_code
-        self.message = message
+    pass
