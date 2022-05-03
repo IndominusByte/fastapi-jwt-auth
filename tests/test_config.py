@@ -58,6 +58,10 @@ def test_default_config():
     assert AuthJWT._access_csrf_header_name == "X-CSRF-Token"
     assert AuthJWT._refresh_csrf_header_name == "X-CSRF-Token"
     assert AuthJWT._csrf_methods == {'POST','PUT','PATCH','DELETE'}
+    assert AuthJWT._token_type_claim == True
+    assert AuthJWT._access_token_type == "access"
+    assert AuthJWT._refresh_token_type == "refresh"
+    assert AuthJWT._token_type_claim_name == "type"
 
 def test_token_expired_false(Authorize):
     class TokenFalse(BaseSettings):
@@ -165,6 +169,11 @@ def test_load_env_from_outside():
         authjwt_access_csrf_header_name: str = "ACCESS-CSRF-Token"
         authjwt_refresh_csrf_header_name: str = "REFRESH-CSRF-Token"
         authjwt_csrf_methods: list = ['post']
+        # options to adjust token's type claim
+        authjwt_token_type_claim: bool = True
+        authjwt_access_token_type: str = "access"
+        authjwt_refresh_token_type: str = "refresh"
+        authjwt_token_type_claim_name: str = "type"
 
     @AuthJWT.load_config
     def get_valid_settings():
@@ -204,6 +213,11 @@ def test_load_env_from_outside():
     assert AuthJWT._access_csrf_header_name == "ACCESS-CSRF-Token"
     assert AuthJWT._refresh_csrf_header_name == "REFRESH-CSRF-Token"
     assert AuthJWT._csrf_methods == ['POST']
+    # options to adjust token's type claim
+    assert AuthJWT._token_type_claim
+    assert AuthJWT._access_token_type == "access"
+    assert AuthJWT._refresh_token_type == "refresh"
+    assert AuthJWT._token_type_claim_name == "type"
 
     with pytest.raises(TypeError,match=r"Config"):
         @AuthJWT.load_config
@@ -401,3 +415,18 @@ def test_load_env_from_outside():
         @AuthJWT.load_config
         def get_invalid_csrf_methods_value():
             return [("authjwt_csrf_methods",['posts'])]
+
+    with pytest.raises(ValidationError,match=r"authjwt_token_type_claim_name"):
+        @AuthJWT.load_config
+        def get_invalid_token_type_claim_name():
+            return [("authjwt_token_type_claim_name", 'exp')]
+
+    with pytest.raises(ValidationError,match=r"authjwt_token_type_claim_name"):
+        @AuthJWT.load_config
+        def get_invalid_token_type_claim_name():
+            return [("authjwt_token_type_claim_name", 'iss')]
+
+    with pytest.raises(ValidationError,match=r"authjwt_token_type_claim_name"):
+        @AuthJWT.load_config
+        def get_invalid_token_type_claim_name():
+            return [("authjwt_token_type_claim_name", 'sub')]

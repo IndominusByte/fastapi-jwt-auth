@@ -162,8 +162,15 @@ class AuthJWT(AuthConfig):
             "nbf": self._get_int_from_datetime(datetime.now(timezone.utc)),
             "jti": self._get_jwt_identifier()
         }
+        token_types = {
+            'access': self._access_token_type,
+            'refresh': self._refresh_token_type,
+        }
 
-        custom_claims = {"type": type_token}
+        if self._token_type_claim:
+            custom_claims = {self._token_type_claim_name: token_types[type_token]}
+        else:
+            custom_claims = {}
 
         # for access_token only fresh needed
         if type_token == 'access':
@@ -579,10 +586,12 @@ class AuthJWT(AuthConfig):
 
         :param token: The encoded JWT
         """
-        if token: self._verifying_token(token)
+        if token: 
+            self._verifying_token(token)
+            if self._token_type_claim:
+                if self.get_raw_jwt(token)[self._token_type_claim_name] != self._access_token_type:
+                    raise AccessTokenRequired(status_code=422,message="Only access tokens are allowed")
 
-        if token and self.get_raw_jwt(token)['type'] != 'access':
-            raise AccessTokenRequired(status_code=422,message="Only access tokens are allowed")
 
     def _verify_jwt_in_request(
         self,
@@ -613,15 +622,20 @@ class AuthJWT(AuthConfig):
         # verify jwt
         issuer = self._decode_issuer if type_token == 'access' else None
         self._verifying_token(token,issuer)
+        raw_jwt = self.get_raw_jwt(token)
+        if self._token_type_claim:
+            token_types = {
+                "access": self._access_token_type,
+                "refresh": self._refresh_token_type,
+            }
+            if raw_jwt[self._token_type_claim_name] != token_types[type_token]:
+                msg = "Only {} tokens are allowed".format(token_types[type_token])
+                if type_token == 'access':
+                    raise AccessTokenRequired(status_code=422,message=msg)
+                if type_token == 'refresh':
+                    raise RefreshTokenRequired(status_code=422,message=msg)
 
-        if self.get_raw_jwt(token)['type'] != type_token:
-            msg = "Only {} tokens are allowed".format(type_token)
-            if type_token == 'access':
-                raise AccessTokenRequired(status_code=422,message=msg)
-            if type_token == 'refresh':
-                raise RefreshTokenRequired(status_code=422,message=msg)
-
-        if fresh and not self.get_raw_jwt(token)['fresh']:
+        if fresh and not raw_jwt['fresh']:
             raise FreshTokenRequired(status_code=401,message="Fresh token required")
 
     def _verifying_token(self,encoded_token: str, issuer: Optional[str] = None) -> None:
@@ -632,8 +646,9 @@ class AuthJWT(AuthConfig):
         :param issuer: expected issuer in the JWT
         """
         raw_token = self._verified_token(encoded_token,issuer)
-        if raw_token['type'] in self._denylist_token_checks:
-            self._check_token_is_revoked(raw_token)
+        if self._token_type_claim:
+            if raw_token[self._token_type_claim_name] in self._denylist_token_checks:
+                self._check_token_is_revoked(raw_token)
 
     def _verified_token(self,encoded_token: str, issuer: Optional[str] = None) -> Dict[str,Union[str,int,bool]]:
         """

@@ -43,6 +43,11 @@ class LoadConfig(BaseModel):
     authjwt_access_csrf_header_name: Optional[StrictStr] = "X-CSRF-Token"
     authjwt_refresh_csrf_header_name: Optional[StrictStr] = "X-CSRF-Token"
     authjwt_csrf_methods: Optional[Sequence[StrictStr]] = {'POST','PUT','PATCH','DELETE'}
+    # options to adjust token's type claim
+    authjwt_token_type_claim: Optional[StrictBool] = True
+    authjwt_access_token_type: Optional[StrictStr] = "access"
+    authjwt_refresh_token_type: Optional[StrictStr] = "refresh"
+    authjwt_token_type_claim_name: Optional[StrictStr] = "type"
 
     @validator('authjwt_access_token_expires')
     def validate_access_token_expires(cls, v):
@@ -79,6 +84,12 @@ class LoadConfig(BaseModel):
         if v.upper() not in {"GET", "HEAD", "POST", "PUT", "DELETE", "PATCH"}:
             raise ValueError("The 'authjwt_csrf_methods' must be between http request methods")
         return v.upper()
+
+    @validator('authjwt_token_type_claim_name')
+    def validate_token_type_claim_name(cls, v):
+        if v.lower() in {'iss', 'sub', 'aud', 'exp', 'nbf', 'iat', 'jti'}:
+            raise ValueError("The 'authjwt_token_type_claim_name' can not override default JWT claims")
+        return v
 
     class Config:
         min_anystr_length = 1

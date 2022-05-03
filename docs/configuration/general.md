@@ -41,3 +41,16 @@
 `authjwt_refresh_token_expires`
 :   How long an refresh token should live before it expires. This takes value `integer` *(seconds)* or
     `datetime.timedelta`, and defaults to **30 days**. Can be set to `False` to disable expiration.
+
+`authjwt_token_type_claim`
+:   Wether you want to add claim that identidies type of a token. Setting it to `False` is not recommended,
+    but it's useful for integration with other systems that use jwt. Defaults to `True`
+
+`authjwt_access_token_type`
+:   String that will be placed in type claim to identify if token is an access token. Defaults to `access`
+
+`authjwt_refresh_token_type`
+:   String that will be placed in type claim to identify if token is a refresh token. Defaults to `refresh`
+
+`authjwt_token_type_claim_name`
+:   Name of claim where type of a token is located. Defaults to `type`
