@@ -49,6 +49,19 @@ def default_access_token():
         'fresh': True,
     }
 
+@pytest.fixture()
+def test_settings() -> None:
+    class TestSettings(BaseSettings):
+        AUTHJWT_SECRET_KEY: str = "secret-key"
+        AUTHJWT_ACCESS_TOKEN_EXPIRES: int = 1
+        AUTHJWT_REFRESH_TOKEN_EXPIRES: int = 1
+        AUTHJWT_DECODE_LEEWAY: int = 2
+
+    @AuthJWT.load_config
+    def load():
+        return TestSettings()
+
+
 @pytest.fixture(scope='function')
 def encoded_token(default_access_token):
     return jwt.encode(default_access_token,'secret-key',algorithm='HS256').decode('utf-8')
@@ -111,23 +124,23 @@ def test_verified_token(client,encoded_token,Authorize):
     assert response.status_code == 200
     assert response.json() == {'hello':'world'}
 
-def test_get_raw_token(client,default_access_token,encoded_token):
+def test_get_raw_token(client,default_access_token,encoded_token,test_settings):
     response = client.get('/raw_token',headers={"Authorization":f"Bearer {encoded_token}"})
     assert response.status_code == 200
     assert response.json() == default_access_token
 
-def test_get_raw_jwt(default_access_token,encoded_token,Authorize):
+def test_get_raw_jwt(default_access_token,encoded_token,Authorize,test_settings):
     assert Authorize.get_raw_jwt(encoded_token) == default_access_token
 
-def test_get_jwt_jti(client,default_access_token,encoded_token,Authorize):
+def test_get_jwt_jti(client,default_access_token,encoded_token,Authorize,test_settings):
     assert Authorize.get_jti(encoded_token=encoded_token) == default_access_token['jti']
 
-def test_get_jwt_subject(client,default_access_token,encoded_token):
+def test_get_jwt_subject(client,default_access_token,encoded_token,test_settings):
     response = client.get('/get_subject',headers={"Authorization":f"Bearer {encoded_token}"})
     assert response.status_code == 200
     assert response.json() == default_access_token['sub']
 
-def test_invalid_jwt_issuer(client,Authorize):
+def test_invalid_jwt_issuer(client,Authorize,test_settings):
     # No issuer claim expected or provided - OK
     token = Authorize.create_access_token(subject='test')
     response = client.get('/protected',headers={'Authorization':f"Bearer {token}"})
@@ -154,7 +167,7 @@ def test_invalid_jwt_issuer(client,Authorize):
     AuthJWT._encode_issuer = None
 
 @pytest.mark.parametrize("token_aud",['foo', ['bar'], ['foo', 'bar', 'baz']])
-def test_valid_aud(client,Authorize,token_aud):
+def test_valid_aud(client,Authorize,token_aud,test_settings):
     AuthJWT._decode_audience = ['foo','bar']
 
     access_token = Authorize.create_access_token(subject=1,audience=token_aud)
@@ -171,7 +184,7 @@ def test_valid_aud(client,Authorize,token_aud):
         AuthJWT._decode_audience = None
 
 @pytest.mark.parametrize("token_aud",['bar', ['bar'], ['bar', 'baz']])
-def test_invalid_aud_and_missing_aud(client,Authorize,token_aud):
+def test_invalid_aud_and_missing_aud(client,Authorize,token_aud,test_settings):
     AuthJWT._decode_audience = 'foo'
 
     access_token = Authorize.create_access_token(subject=1,audience=token_aud)
@@ -187,7 +200,7 @@ def test_invalid_aud_and_missing_aud(client,Authorize,token_aud):
     if token_aud == ['bar','baz']:
         AuthJWT._decode_audience = None
 
-def test_invalid_decode_algorithms(client,Authorize):
+def test_invalid_decode_algorithms(client,Authorize,test_settings):
     class SettingsAlgorithms(BaseSettings):
         authjwt_secret_key: str = "secret"
         authjwt_decode_algorithms: list = ['HS384','RS256']
@@ -203,7 +216,7 @@ def test_invalid_decode_algorithms(client,Authorize):
 
     AuthJWT._decode_algorithms = None
 
-def test_valid_asymmetric_algorithms(client,Authorize):
+def test_valid_asymmetric_algorithms(client,Authorize,test_settings):
     hs256_token = Authorize.create_access_token(subject=1)
 
     DIR = os.path.abspath(os.path.dirname(__file__))
@@ -236,7 +249,7 @@ def test_valid_asymmetric_algorithms(client,Authorize):
     assert response.status_code == 200
     assert response.json() == {'hello':'world'}
 
-def test_invalid_asymmetric_algorithms(client,Authorize):
+def test_invalid_asymmetric_algorithms(client,Authorize,test_settings):
     class SettingsAsymmetricOne(BaseSettings):
         authjwt_algorithm: str = "RS256"
 
