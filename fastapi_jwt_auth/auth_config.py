@@ -44,6 +44,12 @@ class AuthConfig:
     _refresh_csrf_header_name = "X-CSRF-Token"
     _csrf_methods = {'POST','PUT','PATCH','DELETE'}
 
+    # options to adjust token's type claim
+    _token_type_claim = True
+    _access_token_type = "access"
+    _refresh_token_type = "refresh"
+    _token_type_claim_name = "type"
+
     @property
     def jwt_in_cookies(self) -> bool:
         return 'cookies' in self._token_location
@@ -91,6 +97,10 @@ class AuthConfig:
             cls._access_csrf_header_name = config.authjwt_access_csrf_header_name
             cls._refresh_csrf_header_name = config.authjwt_refresh_csrf_header_name
             cls._csrf_methods = config.authjwt_csrf_methods
+            cls._token_type_claim = config.authjwt_token_type_claim
+            cls._access_token_type = config.authjwt_access_token_type
+            cls._refresh_token_type = config.authjwt_refresh_token_type
+            cls._token_type_claim_name = config.authjwt_token_type_claim_name
         except ValidationError:
             raise
         except Exception:
