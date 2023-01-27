@@ -23,7 +23,7 @@ async def test_create_access_token(Authorize):
     with pytest.raises(TypeError, match=r"fresh"):
         await Authorize.create_access_token(subject="test", fresh="lol")
 
-    with pytest.raises(ValueError, match=r"dictionary update sequence element"):
+    with pytest.raises(AttributeError, match=r"'str' object has no attribute 'get'"):
         await Authorize.create_access_token(subject=1, headers="test")
 
 
@@ -34,7 +34,7 @@ async def test_create_refresh_token(Authorize):
     with pytest.raises(TypeError, match=r"subject"):
         await Authorize.create_refresh_token(subject=0.123)
 
-    with pytest.raises(ValueError, match=r"dictionary update sequence element"):
+    with pytest.raises(AttributeError, match=r"'str' object has no attribute 'get'"):
         await Authorize.create_refresh_token(subject=1, headers="test")
 
 

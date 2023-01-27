@@ -26,7 +26,7 @@ dynamic = ["version", "description"]
 
 dependencies = [
   "fastapi>=0.73.0",
-  "PyJWT>=2.3.0"
+  "PyJWT>=2.4.0"
 ]
 
 
