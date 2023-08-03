@@ -1,58 +1,61 @@
-[build-system]
-requires = ["flit_core >=3.2,<4"]
-build-backend = "flit_core.buildapi"
-
-
-[project]
+[tool.poetry]
 name = "async_fastapi_jwt_auth"
-authors = [
-    {name = "Yan Khachko & Nyoman Pradipta Dewantara", email = "a@slnk.icu"},
-]
+version = "0.6"
+description = "Async fork of FastAPI extension that provides JWT Auth support (secure, easy to use and lightweight)"
+authors = ["Yan Khachko <a@slnk.icu>"]
 readme = "README.md"
+license = "MIT"
 classifiers = [
   "Environment :: Web Environment",
   "Intended Audience :: Developers",
-  "Programming Language :: Python :: 3",
-  "Programming Language :: Python :: 3.7",
   "Programming Language :: Python :: 3.8",
   "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
   "License :: OSI Approved :: MIT License",
   "Operating System :: OS Independent",
   "Topic :: Internet :: WWW/HTTP :: Dynamic Content",
   "Topic :: Software Development :: Libraries :: Python Modules"
 ]
-requires-python = ">=3.7"
-dynamic = ["version", "description"]
+build = "poetry build"
 
-dependencies = [
-  "fastapi>=0.73.0",
-  "PyJWT>=2.4.0",
-  "httpx>=0.23.3"
+[tool.poetry.dependencies]
+python = ">=3.10"
+fastapi = "^0.100.1"
+PyJWT = "^2.8.0"
+httpx = ">=0.23.3"
+pydantic-settings = "^2.0.2"
+cryptography = "^41.0.3"
+
+[tool.poetry.extras]
+asymmetric = ["cryptography"]
+
+[tool.poetry.group.dev.dependencies]
+black = "^23.7.0"
+poethepoet = "^0.21.1"
+pytest = "^7.4.0"
+uvicorn = "^0.23.2"
+pytest-asyncio = "^0.21.1"
+coveralls = "==3.3.1"
+mkdocs = ">=1.1.2,<2.0.0"
+mkdocs-material = ">=5.5.0,<6.0.0"
+markdown-include = ">=0.5.1,<0.6.0"
+isort = "^5.12.0"
+
+[tool.isort]
+profile = "black"
+multi_line_output = 3
+
+[tool.poe.tasks]
+autoformat.sequence = [
+    {cmd = "black async_fastapi_jwt_auth tests examples"},
+    {cmd = "isort async_fastapi_jwt_auth tests examples"},
 ]
 
+test.sequence = [
+  {cmd = "pytest"}
+]
 
-[project.urls]
+[tool.poetry.urls]
 Documentation = "https://sijokun.github.io/async-fastapi-jwt-auth"
 Source = "https://github.com/sijokun/async-fastapi-jwt-auth"
-
-
-[project.optional-dependencies]
-test = [
-  "pytest>=6.2.5",
-  "pytest-cov>=3.0.0",
-  "coveralls==3.3.1",
-  "pytest-asyncio>=0.17.2"
-]
-
-doc = [
-  "mkdocs>=1.1.2,<2.0.0",
-  "mkdocs-material>=5.5.0,<6.0.0",
-  "markdown-include>=0.5.1,<0.6.0"
-]
-
-dev = [
-  "cryptography>=2.6,<4.0.0",
-  "uvicorn>=0.17.3"
-]
-
-asymmetric = ["cryptography>=2.6,<4.0.0"]

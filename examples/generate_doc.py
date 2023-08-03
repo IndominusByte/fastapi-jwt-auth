@@ -1,9 +1,10 @@
-from fastapi import FastAPI, Request, Depends, HTTPException
-from fastapi.responses import JSONResponse
+from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.openapi.utils import get_openapi
+from fastapi.responses import JSONResponse
+from pydantic import BaseModel
+
 from async_fastapi_jwt_auth import AuthJWT
 from async_fastapi_jwt_auth.exceptions import AuthJWTException
-from pydantic import BaseModel
 
 app = FastAPI()
 
@@ -24,13 +25,10 @@ def get_config():
 
 @app.exception_handler(AuthJWTException)
 def authjwt_exception_handler(request: Request, exc: AuthJWTException):
-    return JSONResponse(
-        status_code=exc.status_code,
-        content={"detail": exc.message}
-    )
+    return JSONResponse(status_code=exc.status_code, content={"detail": exc.message})
 
 
-@app.post('/login')
+@app.post("/login")
 async def login(user: User, Authorize: AuthJWT = Depends()):
     if user.username != "test" or user.password != "test":
         raise HTTPException(status_code=401, detail="Bad username or password")
@@ -39,7 +37,7 @@ async def login(user: User, Authorize: AuthJWT = Depends()):
     return {"access_token": access_token}
 
 
-@app.get('/protected', operation_id="authorize")
+@app.get("/protected", operation_id="authorize")
 async def protected(Authorize: AuthJWT = Depends()):
     await Authorize.jwt_required()
 
@@ -63,24 +61,25 @@ def custom_openapi():
         "name": "Authorization",
         "in": "header",
         "required": True,
-        "schema": {
-            "title": "Authorization",
-            "type": "string"
-        },
+        "schema": {"title": "Authorization", "type": "string"},
     }
 
     # Get routes from index 4 because before that fastapi define router for /openapi.json, /redoc, /docs, etc
     # Get all router where operation_id is authorize
-    router_authorize = [route for route in app.routes[4:] if route.operation_id == "authorize"]
+    router_authorize = [
+        route for route in app.routes[4:] if route.operation_id == "authorize"
+    ]
 
     for route in router_authorize:
         method = list(route.methods)[0].lower()
         try:
             # If the router has another parameter
-            openapi_schema["paths"][route.path][method]['parameters'].append(headers)
+            openapi_schema["paths"][route.path][method]["parameters"].append(headers)
         except Exception:
             # If the router doesn't have a parameter
-            openapi_schema["paths"][route.path][method].update({"parameters": [headers]})
+            openapi_schema["paths"][route.path][method].update(
+                {"parameters": [headers]}
+            )
 
     app.openapi_schema = openapi_schema
     return app.openapi_schema

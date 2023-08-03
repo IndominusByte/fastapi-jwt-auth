@@ -1,8 +1,9 @@
-from fastapi import FastAPI, HTTPException, Depends, Request
+from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse
+from pydantic import BaseModel
+
 from async_fastapi_jwt_auth import AuthJWT
 from async_fastapi_jwt_auth.exceptions import AuthJWTException
-from pydantic import BaseModel
 
 """
 Note: This is just a basic example how to enable cookies.
@@ -32,13 +33,10 @@ def get_config():
 
 @app.exception_handler(AuthJWTException)
 def authjwt_exception_handler(request: Request, exc: AuthJWTException):
-    return JSONResponse(
-        status_code=exc.status_code,
-        content={"detail": exc.message}
-    )
+    return JSONResponse(status_code=exc.status_code, content={"detail": exc.message})
 
 
-@app.post('/login')
+@app.post("/login")
 async def login(user: User, Authorize: AuthJWT = Depends()):
     if user.username != "test" or user.password != "test":
         raise HTTPException(status_code=401, detail="Bad username or password")
@@ -53,7 +51,7 @@ async def login(user: User, Authorize: AuthJWT = Depends()):
     return {"msg": "Successfully login"}
 
 
-@app.post('/refresh')
+@app.post("/refresh")
 async def refresh(Authorize: AuthJWT = Depends()):
     await Authorize.jwt_refresh_token_required()
 
@@ -64,7 +62,7 @@ async def refresh(Authorize: AuthJWT = Depends()):
     return {"msg": "The token has been refresh"}
 
 
-@app.delete('/logout')
+@app.delete("/logout")
 async def logout(Authorize: AuthJWT = Depends()):
     """
     Because the JWT are stored in an httponly cookie now, we cannot
@@ -77,7 +75,7 @@ async def logout(Authorize: AuthJWT = Depends()):
     return {"msg": "Successfully logout"}
 
 
-@app.get('/protected')
+@app.get("/protected")
 async def protected(Authorize: AuthJWT = Depends()):
     """
     We do not need to make any changes to our protected endpoints. They

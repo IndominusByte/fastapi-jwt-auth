@@ -1,12 +1,14 @@
-from async_fastapi_jwt_auth.config import LoadConfig
-from pydantic import ValidationError
-from typing import Callable, List
 from datetime import timedelta
+from typing import Callable, List
+
+from pydantic import ValidationError
+
+from async_fastapi_jwt_auth.config import LoadConfig
 
 
 class AuthConfig:
     _token = None
-    _token_location = {'headers'}
+    _token_location = {"headers"}
 
     _secret_key = None
     _public_key = None
@@ -18,7 +20,7 @@ class AuthConfig:
     _decode_issuer = None
     _decode_audience = None
     _denylist_enabled = False
-    _denylist_token_checks = {'access', 'refresh'}
+    _denylist_token_checks = {"access", "refresh"}
     _header_name = "Authorization"
     _header_type = "Bearer"
     _token_in_denylist_callback = None
@@ -43,15 +45,15 @@ class AuthConfig:
     _refresh_csrf_cookie_path = "/"
     _access_csrf_header_name = "X-CSRF-Token"
     _refresh_csrf_header_name = "X-CSRF-Token"
-    _csrf_methods = {'POST', 'PUT', 'PATCH', 'DELETE'}
+    _csrf_methods = {"POST", "PUT", "PATCH", "DELETE"}
 
     @property
     def jwt_in_cookies(self) -> bool:
-        return 'cookies' in self._token_location
+        return "cookies" in self._token_location
 
     @property
     def jwt_in_headers(self) -> bool:
-        return 'headers' in self._token_location
+        return "headers" in self._token_location
 
     @classmethod
     def load_config(cls, settings: Callable[..., List[tuple]]):

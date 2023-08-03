@@ -2,8 +2,9 @@ class AuthJWTException(Exception):
     """
     Base except which all fastapi_jwt_auth errors extend
     """
+
     status_code: int = 400
-    message: str = ''
+    message: str = ""
     pass
 
 

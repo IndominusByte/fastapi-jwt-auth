@@ -1,9 +1,10 @@
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
+from pydantic import BaseModel
+from routers import items, users
+
 from async_fastapi_jwt_auth import AuthJWT
 from async_fastapi_jwt_auth.exceptions import AuthJWTException
-from routers import users, items
-from pydantic import BaseModel
 
 app = FastAPI()
 
@@ -19,11 +20,8 @@ def get_config():
 
 @app.exception_handler(AuthJWTException)
 def authjwt_exception_handler(request: Request, exc: AuthJWTException):
-    return JSONResponse(
-        status_code=exc.status_code,
-        content={"detail": exc.message}
-    )
+    return JSONResponse(status_code=exc.status_code, content={"detail": exc.message})
 
 
-app.include_router(users.router, tags=['users'])
-app.include_router(items.router, tags=['items'])
+app.include_router(users.router, tags=["users"])
+app.include_router(items.router, tags=["items"])

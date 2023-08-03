@@ -1,8 +1,9 @@
-from fastapi import FastAPI, HTTPException, Depends, Request
+from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse
+from pydantic import BaseModel
+
 from async_fastapi_jwt_auth import AuthJWT
 from async_fastapi_jwt_auth.exceptions import AuthJWTException
-from pydantic import BaseModel
 
 app = FastAPI()
 
@@ -27,10 +28,7 @@ def get_config():
 
 @app.exception_handler(AuthJWTException)
 def authjwt_exception_handler(request: Request, exc: AuthJWTException):
-    return JSONResponse(
-        status_code=exc.status_code,
-        content={"detail": exc.message}
-    )
+    return JSONResponse(status_code=exc.status_code, content={"detail": exc.message})
 
 
 # A storage engine to save revoked tokens. in production,
@@ -44,11 +42,11 @@ denylist = set()
 # with the value true if revoked and false if not revoked
 @AuthJWT.token_in_denylist_loader
 async def check_if_token_in_denylist(decrypted_token):
-    jti = decrypted_token['jti']
+    jti = decrypted_token["jti"]
     return jti in denylist
 
 
-@app.post('/login')
+@app.post("/login")
 async def login(user: User, Authorize: AuthJWT = Depends()):
     if user.username != "test" or user.password != "test":
         raise HTTPException(status_code=401, detail="Bad username or password")
@@ -60,7 +58,7 @@ async def login(user: User, Authorize: AuthJWT = Depends()):
 
 # Standard refresh endpoint. Token in denylist will not
 # be able to access this endpoint
-@app.post('/refresh')
+@app.post("/refresh")
 async def refresh(Authorize: AuthJWT = Depends()):
     await Authorize.jwt_refresh_token_required()
 
@@ -70,27 +68,27 @@ async def refresh(Authorize: AuthJWT = Depends()):
 
 
 # Endpoint for revoking the current users access token
-@app.delete('/access-revoke')
+@app.delete("/access-revoke")
 async def access_revoke(Authorize: AuthJWT = Depends()):
     await Authorize.jwt_required()
 
-    jti = (await Authorize.get_raw_jwt())['jti']
+    jti = (await Authorize.get_raw_jwt())["jti"]
     denylist.add(jti)
     return {"detail": "Access token has been revoke"}
 
 
 # Endpoint for revoking the current users refresh token
-@app.delete('/refresh-revoke')
+@app.delete("/refresh-revoke")
 async def refresh_revoke(Authorize: AuthJWT = Depends()):
     await Authorize.jwt_refresh_token_required()
 
-    jti = (await Authorize.get_raw_jwt())['jti']
+    jti = (await Authorize.get_raw_jwt())["jti"]
     denylist.add(jti)
     return {"detail": "Refresh token has been revoke"}
 
 
 # A token in denylist will not be able to access this any more
-@app.get('/protected')
+@app.get("/protected")
 async def protected(Authorize: AuthJWT = Depends()):
     await Authorize.jwt_required()
 
