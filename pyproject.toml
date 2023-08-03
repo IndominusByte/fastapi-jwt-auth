@@ -20,7 +20,7 @@ classifiers = [
 build = "poetry build"
 
 [tool.poetry.dependencies]
-python = ">=3.10"
+python = ">=3.8"
 fastapi = "^0.100.1"
 PyJWT = "^2.8.0"
 httpx = ">=0.23.3"
