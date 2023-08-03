@@ -4,27 +4,23 @@ on: [push, pull_request]
 
 jobs:
   test:
-    runs-on: ubuntu-latest
     strategy:
-      matrix:
-        python-version: ["3.7", "3.8", "3.9", "3.10", "3.11"]
       fail-fast: false
-    
+      matrix:
+        python-version: ["3.8", "3.9", "3.10", "3.11"]
+
+    runs-on: ubuntu-latest
+
     steps:
       - uses: actions/checkout@v2
-      - name: Set up Python
-        uses: actions/setup-python@v1
+      - uses: actions/setup-python@v2
         with:
           python-version: ${{ matrix.python-version }}
-      - name: Install Flit
-        run: pip install flit
-      - name: Install Dependencies
-        run: flit install --symlink
+      - name: Run image
+        uses: abatilo/actions-poetry@v2.0.0
+        with:
+          poetry-version: 1.4.2
+      - name: Install project
+        run: poetry install
       - name: Test
-        run: bash scripts/tests.sh
-      - name: Coveralls
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          coveralls --service=github
-
+        run: poetry run poe test

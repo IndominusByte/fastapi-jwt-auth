@@ -1,8 +1,9 @@
-from fastapi import FastAPI, HTTPException, Depends, Request
+from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse
+from pydantic import BaseModel
+
 from async_fastapi_jwt_auth import AuthJWT
 from async_fastapi_jwt_auth.exceptions import AuthJWTException
-from pydantic import BaseModel
 
 app = FastAPI()
 
@@ -23,14 +24,11 @@ def get_config():
 
 @app.exception_handler(AuthJWTException)
 def authjwt_exception_handler(request: Request, exc: AuthJWTException):
-    return JSONResponse(
-        status_code=exc.status_code,
-        content={"detail": exc.message}
-    )
+    return JSONResponse(status_code=exc.status_code, content={"detail": exc.message})
 
 
 # Standard login endpoint. Will return a fresh access token and a refresh token
-@app.post('/login')
+@app.post("/login")
 async def login(user: User, Authorize: AuthJWT = Depends()):
     if user.username != "test" or user.password != "test":
         raise HTTPException(status_code=401, detail="Bad username or password")
@@ -41,12 +39,14 @@ async def login(user: User, Authorize: AuthJWT = Depends()):
     As we just verified their username and password, we are
     going to mark the token as fresh here.
     """
-    access_token = await Authorize.create_access_token(subject=user.username, fresh=True)
+    access_token = await Authorize.create_access_token(
+        subject=user.username, fresh=True
+    )
     refresh_token = await Authorize.create_refresh_token(subject=user.username)
     return {"access_token": access_token, "refresh_token": refresh_token}
 
 
-@app.post('/refresh')
+@app.post("/refresh")
 async def refresh(Authorize: AuthJWT = Depends()):
     """
     Refresh token endpoint. This will generate a new access token from
@@ -56,11 +56,13 @@ async def refresh(Authorize: AuthJWT = Depends()):
     await Authorize.jwt_refresh_token_required()
 
     current_user = await Authorize.get_jwt_subject()
-    new_access_token = await Authorize.create_access_token(subject=current_user, fresh=False)
+    new_access_token = await Authorize.create_access_token(
+        subject=current_user, fresh=False
+    )
     return {"access_token": new_access_token}
 
 
-@app.post('/fresh-login')
+@app.post("/fresh-login")
 async def fresh_login(user: User, Authorize: AuthJWT = Depends()):
     """
     Fresh login endpoint. This is designed to be used if we need to
@@ -72,12 +74,14 @@ async def fresh_login(user: User, Authorize: AuthJWT = Depends()):
     if user.username != "test" or user.password != "test":
         raise HTTPException(status_code=401, detail="Bad username or password")
 
-    new_access_token = await Authorize.create_access_token(subject=user.username, fresh=True)
+    new_access_token = await Authorize.create_access_token(
+        subject=user.username, fresh=True
+    )
     return {"access_token": new_access_token}
 
 
 # Any valid JWT access token can access this endpoint
-@app.get('/protected')
+@app.get("/protected")
 async def protected(Authorize: AuthJWT = Depends()):
     await Authorize.jwt_required()
 
@@ -86,7 +90,7 @@ async def protected(Authorize: AuthJWT = Depends()):
 
 
 # Only fresh JWT access token can access this endpoint
-@app.get('/protected-fresh')
+@app.get("/protected-fresh")
 async def protected_fresh(Authorize: AuthJWT = Depends()):
     await Authorize.fresh_jwt_required()
 

@@ -1,8 +1,9 @@
-from fastapi import FastAPI, HTTPException, Depends, Request
+from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse
+from pydantic import BaseModel
+
 from async_fastapi_jwt_auth import AuthJWT
 from async_fastapi_jwt_auth.exceptions import AuthJWTException
-from pydantic import BaseModel
 
 app = FastAPI()
 
@@ -23,13 +24,10 @@ def get_config():
 
 @app.exception_handler(AuthJWTException)
 def authjwt_exception_handler(request: Request, exc: AuthJWTException):
-    return JSONResponse(
-        status_code=exc.status_code,
-        content={"detail": exc.message}
-    )
+    return JSONResponse(status_code=exc.status_code, content={"detail": exc.message})
 
 
-@app.post('/login')
+@app.post("/login")
 async def login(user: User, Authorize: AuthJWT = Depends()):
     if user.username != "test" or user.password != "test":
         raise HTTPException(status_code=401, detail="Bad username or password")
@@ -41,7 +39,7 @@ async def login(user: User, Authorize: AuthJWT = Depends()):
     return {"access_token": access_token, "refresh_token": refresh_token}
 
 
-@app.post('/refresh')
+@app.post("/refresh")
 async def refresh(Authorize: AuthJWT = Depends()):
     """
     The jwt_refresh_token_required() function insures a valid refresh
@@ -56,7 +54,7 @@ async def refresh(Authorize: AuthJWT = Depends()):
     return {"access_token": new_access_token}
 
 
-@app.get('/protected')
+@app.get("/protected")
 async def protected(Authorize: AuthJWT = Depends()):
     await Authorize.jwt_required()
 
