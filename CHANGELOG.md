@@ -1,3 +1,9 @@
+## Async fork 0.6.1
+* Fix CHANGELOG.md, test action
+
+## Async fork 0.6.0
+* Poetry, Pydantic 2.0
+
 ## Async fork 0.5.0
 * Now you can use this lib with async!
 

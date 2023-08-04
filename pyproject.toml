@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "async_fastapi_jwt_auth"
-version = "0.6"
+version = "0.6.1"
 description = "Async fork of FastAPI extension that provides JWT Auth support (secure, easy to use and lightweight)"
 authors = ["Yan Khachko <a@slnk.icu>"]
 readme = "README.md"
