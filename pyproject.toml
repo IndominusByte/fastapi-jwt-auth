@@ -17,7 +17,6 @@ classifiers = [
   "Topic :: Internet :: WWW/HTTP :: Dynamic Content",
   "Topic :: Software Development :: Libraries :: Python Modules"
 ]
-build = "poetry build"
 
 [tool.poetry.dependencies]
 python = ">=3.8"
