@@ -58,26 +58,30 @@ class LoadConfig(BaseModel):
 
     @field_validator('authjwt_denylist_token_checks')
     def validate_denylist_token_checks(cls, v):
-        if v not in ['access', 'refresh']:
-            raise ValueError("The 'authjwt_denylist_token_checks' must be between 'access' or 'refresh'")
+        for item in v:
+            if item not in ['access', 'refresh']:
+                raise ValueError("The 'authjwt_denylist_token_checks' must be between 'access' or 'refresh'")
         return v
 
     @field_validator('authjwt_token_location')
     def validate_token_location(cls, v):
-        if v not in ['headers', 'cookies']:
-            raise ValueError("The 'authjwt_token_location' must be between 'headers' or 'cookies'")
+        for location in v:
+            if location not in ['headers', 'cookies']:
+                raise ValueError("The 'authjwt_token_location' must be between 'headers' or 'cookies'")
         return v
 
     @field_validator('authjwt_cookie_samesite')
     def validate_cookie_samesite(cls, v):
-        if v not in ['strict', 'lax', 'none']:
-            raise ValueError("The 'authjwt_cookie_samesite' must be between 'strict', 'lax', 'none'")
+        for item in v:
+            if item not in ['strict', 'lax', 'none']:
+                raise ValueError("The 'authjwt_cookie_samesite' must be between 'strict', 'lax', 'none'")
         return v
 
     @field_validator('authjwt_csrf_methods')
     def validate_csrf_methods(cls, v):
-        if v.upper() not in {"GET", "HEAD", "POST", "PUT", "DELETE", "PATCH"}:
-            raise ValueError("The 'authjwt_csrf_methods' must be between http request methods")
+        for item in v:
+            if item.upper() not in {"GET", "HEAD", "POST", "PUT", "DELETE", "PATCH"}:
+                raise ValueError("The 'authjwt_csrf_methods' must be between http request methods")
         return v.upper()
 
     class Config:
