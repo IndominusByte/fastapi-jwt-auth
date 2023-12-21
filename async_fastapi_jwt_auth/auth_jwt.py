@@ -7,6 +7,8 @@ from typing import Dict, Optional, Sequence, Union
 
 import jwt
 from fastapi import Request, Response, WebSocket
+from fastapi.openapi.models import HTTPBearer as HTTPBearerModel
+from fastapi.security.http import HTTPBase
 from jwt.algorithms import has_crypto, requires_cryptography
 
 from async_fastapi_jwt_auth.auth_config import AuthConfig
@@ -925,3 +927,20 @@ class AuthJWT(AuthConfig):
         encoded_token = encoded_token or self._token
 
         return jwt.get_unverified_header(encoded_token)
+
+
+class AuthJWTBearer(HTTPBase):
+    def __init__(
+        self,
+        *,
+        bearerFormat: Optional[str] = None,
+        scheme_name: Optional[str] = None,
+        description: Optional[str] = None,
+        auto_error: bool = True,
+    ):
+        self.model = HTTPBearerModel(bearerFormat=bearerFormat, description=description)
+        self.scheme_name = scheme_name or self.__class__.__name__
+        self.auto_error = auto_error
+
+    def __call__(self, req: Request = None, res: Response = None) -> AuthJWT:
+        return AuthJWT(req=req, res=res)
