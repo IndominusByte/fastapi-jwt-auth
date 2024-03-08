@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "async_fastapi_jwt_auth"
-version = "0.6.2"
+version = "0.6.3"
 description = "Async fork of FastAPI extension that provides JWT Auth support (secure, easy to use and lightweight)"
 authors = ["Yan Khachko <a@slnk.icu>"]
 readme = "README.md"
@@ -12,6 +12,7 @@ classifiers = [
   "Programming Language :: Python :: 3.9",
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
   "License :: OSI Approved :: MIT License",
   "Operating System :: OS Independent",
   "Topic :: Internet :: WWW/HTTP :: Dynamic Content",
@@ -20,11 +21,11 @@ classifiers = [
 
 [tool.poetry.dependencies]
 python = ">=3.8"
-fastapi = "^0.100.1"
-PyJWT = "^2.8.0"
+fastapi = "0.110.0"
+PyJWT = "2.8.0"
 httpx = ">=0.23.3"
-pydantic-settings = "^2.0.2"
-cryptography = "^41.0.3"
+pydantic-settings = "2.0.2"
+cryptography = "42.0.5"
 
 [tool.poetry.extras]
 asymmetric = ["cryptography"]
@@ -32,7 +33,7 @@ asymmetric = ["cryptography"]
 [tool.poetry.group.dev.dependencies]
 black = "^23.7.0"
 poethepoet = "^0.21.1"
-pytest = "^7.4.0"
+pytest = "7.4.0"
 uvicorn = "^0.23.2"
 pytest-asyncio = "^0.21.1"
 coveralls = "==3.3.1"
