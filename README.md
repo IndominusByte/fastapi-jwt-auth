@@ -11,13 +11,19 @@
 
 **Documentation**: <a href="https://indominusbyte.github.io/fastapi-jwt-auth" target="_blank">https://indominusbyte.github.io/fastapi-jwt-auth</a>
 
-**Source Code**: <a href="https://github.com/IndominusByte/fastapi-jwt-auth" target="_blank">https://github.com/IndominusByte/fastapi-jwt-auth</a>
+**Source Code**: <a href="https://github.com/jean-ek/fastapi-jwt-authV2" target="_blank">https://github.com/jean-ek/fastapi-jwt-authV2</a>
+
+**Original Legacy Library** <a href="https://github.com/IndominusByte/fastapi-jwt-auth" target="_blank">https://github.com/IndominusByte/fastapi-jwt-auth</a>
 
 ---
+
+## Notes:
+<b> This is a modified version of the original fastapi-jwt-auth library to add compatibility with pydantic versions 2.* </b>
 
 ## Features
 FastAPI extension that provides JWT Auth support (secure, easy to use and lightweight), if you were familiar with flask-jwt-extended this extension suitable for you, cause this extension inspired by flask-jwt-extended 😀
 
+- Compatible with pydantic 2.* versions
 - Access tokens and refresh tokens
 - Freshness Tokens
 - Revoking Tokens
@@ -29,12 +35,7 @@ FastAPI extension that provides JWT Auth support (secure, easy to use and lightw
 The easiest way to start working with this extension with pip
 
 ```bash
-pip install fastapi-jwt-auth
-```
-
-If you want to use asymmetric (public/private) key signing algorithms, include the <b>asymmetric</b> extra requirements.
-```bash
-pip install 'fastapi-jwt-auth[asymmetric]'
+pip install fastapi-jwt-auth-compat
 ```
 
 ## License
