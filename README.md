@@ -13,7 +13,7 @@
 
 **Source Code**: <a href="https://github.com/jean-ek/fastapi-jwt-authV2" target="_blank">https://github.com/jean-ek/fastapi-jwt-authV2</a>
 
-**Original Legacy Library** <a href="https://github.com/IndominusByte/fastapi-jwt-auth" target="_blank">https://github.com/IndominusByte/fastapi-jwt-auth</a>
+**Original Legacy Library**: <a href="https://github.com/IndominusByte/fastapi-jwt-auth" target="_blank">https://github.com/IndominusByte/fastapi-jwt-auth</a>
 
 ---
 
